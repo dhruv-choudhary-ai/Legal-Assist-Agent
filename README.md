@@ -143,14 +143,14 @@ cd server
 Create a virtual environment to install all the dependencies
 
 ```
-python -m venv legal_env
+python -m venv docbuddy
 ```
 
 Activate the virtual environment
 
-For Windows: ```legal_env\Scripts\activate```
+For Windows: ```docbuddy\Scripts\activate```
 
-For Linux: ```source legal_env/bin/activate```
+For Linux: ```source docbuddy/bin/activate```
 
 Install all the required dependencies
 
