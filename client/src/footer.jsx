@@ -7,49 +7,54 @@ const Footer = () => {
     <div className="lg:flex lg:items-start lg:gap-8">
      
 
-        <div className="col-span-2 sm:col-span-1 mt-[300px]">
+        <div className="col-span-2 sm:col-span-1 mt-300">
             <br />
           <p className="font-medium text-gray-900 dark:text-white">Services</p>
 
           <ul className="mt-6 space-y-4 text-sm">
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Legal Aid
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Company Review
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Accounts Review
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 HR Consulting
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 SEO Optimisation
-              </button>
+              </a>
             </li>
           </ul>
         </div>
@@ -60,27 +65,30 @@ const Footer = () => {
 
           <ul className="mt-6 space-y-4 text-sm">
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 About
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Meet the Team
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Accounts Review
-              </button>
+              </a>
             </li>
           </ul>
         </div>
@@ -91,27 +99,30 @@ const Footer = () => {
 
           <ul className="mt-6 space-y-4 text-sm">
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Contact
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 FAQs
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Live Chat
-              </button>
+              </a>
             </li>
           </ul>
         </div>
@@ -122,35 +133,39 @@ const Footer = () => {
 
           <ul className="mt-6 space-y-4 text-sm">
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Accessibility
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Returns Policy
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Refund Policy
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Hiring Statistics
-              </button>
+              </a>
             </li>
           </ul>
         </div>
@@ -161,19 +176,21 @@ const Footer = () => {
 
           <ul className="mt-6 space-y-4 text-sm">
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 Marketing Calendar
-              </button>
+              </a>
             </li>
 
             <li>
-              <button
-                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200 bg-transparent border-none cursor-pointer p-0"
+              <a
+                href="#"
+                className="text-gray-700 transition hover:opacity-75 dark:text-gray-200"
               >
                 SEO Infographics
-              </button>
+              </a>
             </li>
           </ul>
       <div className='nalsa pt-10'>
@@ -309,40 +326,43 @@ const Footer = () => {
     <div className="mt-8 border-t border-gray-100 pt-8 dark:border-gray-800">
       <div className="sm:flex sm:justify-between">
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          &copy; 2025. LegalAI. All rights reserved.
+          &copy; 2023. DocBuddy . All rights reserved.
         </p>
 
         <ul
           className="mt-8 flex flex-wrap justify-start gap-4 text-xs sm:mt-0 lg:justify-end"
         >
           <li>
-            <button
-              className="text-gray-500 transition hover:opacity-75 dark:text-gray-400 bg-transparent border-none cursor-pointer p-0"
+            <a
+              href="#"
+              className="text-gray-500 transition hover:opacity-75 dark:text-gray-400"
             >
               Terms & Conditions
-            </button>
+            </a>
           </li>
 
           <li>
-            <button
-              className="text-gray-500 transition hover:opacity-75 dark:text-gray-400 bg-transparent border-none cursor-pointer p-0"
+            <a
+              href="#"
+              className="text-gray-500 transition hover:opacity-75 dark:text-gray-400"
             >
               Privacy Policy
-            </button>
+            </a>
           </li>
 
           <li>
-            <button
-              className="text-gray-500 transition hover:opacity-75 dark:text-gray-400 bg-transparent border-none cursor-pointer p-0"
+            <a
+              href="#"
+              className="text-gray-500 transition hover:opacity-75 dark:text-gray-400"
             >
               Cookies
-            </button>
+            </a>
           </li>
         </ul>
       </div>
     </div>
-</footer>
-  );
+  
+</footer>  );
 };
 
 export default Footer;

@@ -5,14 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # create a connection with the database
-conn = psycopg2.connect(
-    database=os.getenv('DATABASE_NAME'), 
-    user=os.getenv('DATABASE_USER'),
-    password=os.getenv('PASSWORD'), 
-    host=os.getenv('DATABASE_HOST'), 
-    port=os.getenv('DATABASE_PORT'),
-    sslmode='require'
-)
+conn = psycopg2.connect(database=os.getenv('DATABASE_NAME'), user=os.getenv('DATABASE_USER'),
+                        password=os.getenv('PASSWORD'), host=os.getenv('DATABASE_HOST'), port=os.getenv('DATABASE_PORT'))
   
 # create a cursor
 cur = conn.cursor()  

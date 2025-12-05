@@ -19,7 +19,7 @@ function InputForm() {
   const [data, setData] = useState([]);
   const [content, setContent] = useState([]);
   const [displayForm, setDisplayForm] = useState(true);
-  // const [displaySteps, setDisplaySteps] = useState(true);
+  const [displaySteps, setDisplaySteps] = useState(true);
   const quillRef = useRef(null);
   const navigate = useNavigate();
   const context = useContext(StepContext);
@@ -156,7 +156,7 @@ function InputForm() {
       .catch((err) => {
         console.log(err);
       });
-  }, [id]);
+  }, []);
 
   useEffect(() => {
     // console.log(data);

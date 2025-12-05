@@ -1,79 +1,10 @@
-# ===================================
-# CORE FLASK DEPENDENCIES
-# ===================================
-flask==3.0.0
-Flask-Cors==4.0.0
-python-dotenv==1.0.0
-
-# ===================================
-# DATABASE
-# ===================================
-psycopg2-binary==2.9.9
-
-# ===================================
-# DOCUMENT PROCESSING
-# ===================================
-python-docx>=1.1.0
-docxtpl==0.20.1
-jinja2==3.1.2
-mammoth==1.6.0
-pypdf2==3.0.1
-pdfplumber==0.11.0
-reportlab==4.0.7
-
-# ===================================
-# AZURE OPENAI & MODERN AI
-# ===================================
-openai==1.54.3
-httpx<0.28.0  # Pin to <0.28 for compatibility with openai==1.54.3 (proxies parameter removed in 0.28+)
-azure-identity==1.19.0
-tiktoken==0.8.0
-tenacity==8.2.3
-
-# ===================================
-# LANGCHAIN FRAMEWORK
-# ===================================
-# langchain==0.3.7
-# langchain-community==0.3.7
-# langchain-openai==0.2.5
-# langchain-core==0.3.15
-# Optional - for advanced features. Commented out due to Python 3.13 compatibility
-
-# ===================================
-# VECTOR DATABASE & EMBEDDINGS
-# ===================================
-sentence-transformers==3.3.1
-chromadb==0.4.22
-
-# ===================================
-# ML & NLP (for legacy model support)
-# ===================================
-nltk==3.9.1
-torch==2.5.1
-numpy==1.26.4
-
-# ===================================
-# AUTHENTICATION
-# ===================================
-flask-bcrypt==1.0.1
-flask-jwt-extended==4.7.1
-
-# ===================================
-# UTILITIES
-# ===================================
-requests==2.32.3
-beautifulsoup4==4.12.3
-markdownify==0.13.1
-python-multipart==0.0.12
-
-# ===================================
-# CACHING & PERFORMANCE
-# ===================================
-redis==5.2.0
-cachetools==5.5.0
-
-# ===================================
-# MONITORING & LOGGING
-# ===================================
-python-json-logger==2.0.7
-colorlog==6.9.0
+flask
+Flask-Cors
+python-docx
+requests
+mysqlclient
+mammoth
+nltk
+sentence-transformers
+python-dotenv
+psycopg2

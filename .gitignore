@@ -1,9 +1,6 @@
 # venv
 
-# Virtual Environments
-venv/
-legal_env/
-env/
+*/docbuddy
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -134,33 +131,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-server/.env
-
-# ChromaDB / Vector Database
-chroma_db/
-server/chroma_db/
-*.sqlite3
-
-# Generated Documents
-generated_documents/
-server/generated_documents/
-test_outputs/
-server/test_outputs/
-
-# User Uploaded Templates
-server/data/user_templates/
-user_template_config.json
-server/data/user_templates/user_template_config.json
-
-# AI Models (if downloaded locally)
-*.model
-*.bin
-models/
-
-# OS Files
-.DS_Store
-Thumbs.db
-desktop.ini
 
 # Spyder project settings
 .spyderproject

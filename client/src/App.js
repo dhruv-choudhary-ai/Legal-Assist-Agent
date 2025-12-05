@@ -1,65 +1,46 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import "./App.css";
-import "./styles/modern.css";
 import React from "react";
-import ModernHome from "./components/ModernHome";
+import Home from "./Home";
 import Service from "./Service";
 import About from "./about";
-import ModernNavbar from "./components/ModernNavbar";
+import Navbar from "./Navbar";
 import InputForm from "./InputForm";
 import Footer from "./footer";
+import Chatbot from "./chatbot";
 import Faq from "./Faq";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Login from "./loginPage";
 import Signup from "./signup";
-import Dashboard from "./components/Dashboard";
 import { ContextProvider } from "./context/StepContext";
-import { AuthProvider } from "./context/AuthContext";
-import { WorkspaceProvider } from "./context/WorkspaceContext";
-import ModernChat from "./components/ModernChat";
-import UnifiedWorkspace from "./components/UnifiedWorkspace";
-import TemplateManager from "./components/TemplateManager";
-import TemplateUploader from "./components/TemplateUploader";
-
-function AppContent() {
-  const location = useLocation();
-  const isWorkspace = location.pathname === '/workspace';
-
-  return (
-    <>
-      {!isWorkspace && <ModernNavbar />}
-      {!isWorkspace && <ModernChat />}
-      <Routes>
-        <Route path="/" element={<ModernHome />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/workspace" element={<UnifiedWorkspace />} />
-        <Route path="/templates" element={<TemplateManager />} />
-        <Route path="/templates/upload" element={<TemplateUploader />} />
-        <Route path="/service/:id" element={<Service />} />
-        <Route path="/form/:id" element={<InputForm />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/faq" element={<Faq />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-      </Routes>
-      <ToastContainer />
-      {!isWorkspace && <Footer />}
-    </>
-  );
-}
+import Chat from "./components/Chat";
 
 function App() {
   return (
-    <AuthProvider>
+    <>
       <ContextProvider>
-        <WorkspaceProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </WorkspaceProvider>
+        <Router>
+          <Navbar />
+          <Chat />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/service/:id" element={<Service />} />
+            <Route path="/form/:id" element={<InputForm />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/faq" element={<Faq />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            {/* <Route path="/chat" element={<Chat />} /> */}
+          </Routes>
+          <ToastContainer />
+        </Router>
+
+        
+        <Footer />
       </ContextProvider>
-    </AuthProvider>
+    </>
   );
 }
 
