@@ -3,10 +3,8 @@ import "./App.css";
 import "./styles/modern.css";
 import React from "react";
 import ModernHome from "./components/ModernHome";
-import Service from "./Service";
 import About from "./components/About";
 import ModernNavbar from "./components/ModernNavbar";
-import InputForm from "./InputForm";
 import Footer from "./components/Footer";
 import Faq from "./components/FAQ";
 import { ToastContainer } from "react-toastify";
@@ -36,8 +34,6 @@ function AppContent() {
         <Route path="/workspace" element={<UnifiedWorkspace />} />
         <Route path="/templates" element={<TemplateManager />} />
         <Route path="/templates/upload" element={<TemplateUploader />} />
-        <Route path="/service/:id" element={<Service />} />
-        <Route path="/form/:id" element={<InputForm />} />
         <Route path="/about" element={<About />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/login" element={<Login />} />

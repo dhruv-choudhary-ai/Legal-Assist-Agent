@@ -193,7 +193,7 @@ const Dashboard = () => {
             </div>
             <h3>No documents yet</h3>
             <p>Start creating legal documents with our AI assistant</p>
-            <Link to="/service/1" className="btn-primary">
+            <Link to="/workspace" className="btn-primary">
               Create Your First Document
             </Link>
           </div>
