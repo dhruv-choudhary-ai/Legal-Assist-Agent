@@ -2,13 +2,13 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
   padding: 2rem 1.5rem;
-  padding-bottom: 4rem;
+  padding-bottom: 1rem;
 }
 
 /* Welcome Section */
 .dashboard-header {
   max-width: 1200px;
-  margin: 0 auto 3rem;
+  margin: 0 auto 1.5rem;
 }
 
 .welcome-card {
@@ -102,7 +102,7 @@
 /* Quick Actions */
 .quick-actions {
   max-width: 1200px;
-  margin: 0 auto 3rem;
+  margin: 0 auto 1.5rem;
 }
 
 .section-title {
@@ -214,7 +214,7 @@
 /* Recent Documents */
 .recent-documents {
   max-width: 1200px;
-  margin: 0 auto 3rem;
+  margin: 0 auto 1.5rem;
 }
 
 .section-header {
@@ -375,7 +375,7 @@
 /* Document History Section */
 .document-history {
   max-width: 1200px;
-  margin: 0 auto 3rem;
+  margin: 0 auto 1.5rem;
   background: white;
   border-radius: 20px;
   padding: 2rem;
@@ -586,7 +586,7 @@
 /* Stats Section */
 .stats-section {
   max-width: 1200px;
-  margin: 0 auto 2rem;
+  margin: 0 auto 1rem;
 }
 
 .stats-grid {
@@ -645,7 +645,7 @@
 @media (max-width: 768px) {
   .dashboard {
     padding: 1rem;
-    padding-bottom: 3rem;
+    padding-bottom: 1rem;
   }
 
   .welcome-card {

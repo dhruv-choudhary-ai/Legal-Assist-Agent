@@ -17,9 +17,21 @@ python-docx>=1.1.0
 docxtpl==0.20.1
 jinja2==3.1.2
 mammoth==1.6.0
+
+# PDF Support
 pypdf2==3.0.1
 pdfplumber==0.11.0
+pymupdf==1.24.0  # More accurate PDF text extraction
 reportlab==4.0.7
+
+# RTF Support
+striprtf==0.0.26  # RTF to plain text conversion
+
+# ODT Support
+odfpy==1.4.1  # OpenDocument format support
+
+# Universal document parsing
+python-magic-bin==0.4.14  # File type detection (Windows compatible)
 
 # ===================================
 # AZURE OPENAI & MODERN AI

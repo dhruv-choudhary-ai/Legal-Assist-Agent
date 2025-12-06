@@ -1,11 +1,14 @@
 """
-Template Converter Service
+Template Converter Service - Multi-Format Edition
 Automatically converts user-uploaded templates to Jinja2 format
 
 Features:
+- Supports DOCX, PDF, TXT, RTF, ODT formats
+- GPT-powered intelligent placeholder detection
 - Detects various placeholder types (hash #, underscores _, dots ., brackets [], etc.)
 - Converts to Jinja2 format {{ variable_name }}
 - Generates intelligent variable names using AI
+- Optimized token usage for cost efficiency
 - Extracts field metadata
 - Validates conversion quality
 """
@@ -16,6 +19,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 from docx import Document
+from .document_extractor import document_extractor
 from .azure_openai_service import ai_service
 from .config import AIConfig
 
@@ -23,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 class TemplateConverter:
-    """Converts user templates to Jinja2 format"""
+    """Converts user templates to Jinja2 format - Multi-format support"""
     
-    # Placeholder detection patterns
+    # Enhanced placeholder detection patterns
     PLACEHOLDER_PATTERNS = {
         'hash': r'#\d+',                          # #1, #2, #123
         'underscore': r'_{4,}',                   # ____, ___________
@@ -35,58 +39,48 @@ class TemplateConverter:
         'brackets_angle': r'<[\s\w-]+>',          # <NAME>, <DATE>
         'dollar': r'\$\{[\w_]+\}',                # ${NAME}, ${DATE}
         'percent': r'%[\w_]+%',                   # %NAME%, %DATE%
+        'double_brackets': r'\{\{[\s\w_]+\}\}',  # {{NAME}}, {{DATE}}
     }
     
     def __init__(self):
         self.ai_enabled = AIConfig.validate()
         if not self.ai_enabled:
             logger.warning("AI service not configured - using basic variable naming")
+        logger.info(f"📄 TemplateConverter initialized (AI: {self.ai_enabled})")
     
     def analyze_template(self, doc_path: str) -> Dict:
         """
-        Analyze template to detect placeholders
+        Analyze template to detect placeholders (multi-format support)
         
         Returns:
             {
                 'total_placeholders': 15,
-                'placeholder_types': {
-                    'hash': ['#1', '#2', ...],
-                    'underscore': ['____', '________'],
-                    ...
-                },
-                'suggested_conversions': {
-                    '#1': 'party_name_1',
-                    '#2': 'effective_date',
-                    ...
-                },
-                'context': {
-                    '#1': 'appears near "Party Name:"',
-                    ...
-                }
+                'format': 'pdf',
+                'placeholder_types': {...},
+                'suggested_conversions': {...},
+                'context': {...}
             }
         """
         try:
-            doc = Document(doc_path)
+            # Check if format is supported
+            if not document_extractor.is_supported(doc_path):
+                file_ext = Path(doc_path).suffix
+                return {
+                    'success': False,
+                    'error': f'Unsupported format: {file_ext}. Supported: .docx, .pdf, .txt, .rtf, .odt'
+                }
             
-            # Extract all text for analysis
-            all_text = []
-            placeholder_contexts = {}
+            # Extract document content
+            logger.info(f"📖 Analyzing {Path(doc_path).name}")
+            extracted = document_extractor.extract(doc_path)
             
-            # Analyze paragraphs
-            for para in doc.paragraphs:
-                all_text.append(para.text)
-            
-            # Analyze tables
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for para in cell.paragraphs:
-                            all_text.append(para.text)
-            
-            full_text = '\n'.join(all_text)
+            full_text = extracted['full_text']
+            doc_format = extracted['format']
             
             # Detect placeholders by type
             detected_placeholders = {}
+            placeholder_contexts = {}
+            
             for ptype, pattern in self.PLACEHOLDER_PATTERNS.items():
                 matches = re.findall(pattern, full_text)
                 if matches:
@@ -99,26 +93,38 @@ class TemplateConverter:
                     context = self._get_placeholder_context(full_text, placeholder)
                     placeholder_contexts[placeholder] = context
             
+            total = sum(len(v) for v in detected_placeholders.values())
+            
+            # If no placeholders detected, use GPT to find them intelligently
+            if total == 0 and self.ai_enabled:
+                logger.info("🤖 No regex placeholders found, using GPT-4 for intelligent detection")
+                gpt_analysis = self._gpt_smart_placeholder_detection(full_text[:3000])
+                if gpt_analysis.get('placeholders'):
+                    detected_placeholders = gpt_analysis['placeholders']
+                    placeholder_contexts = gpt_analysis.get('contexts', {})
+                    total = sum(len(v) for v in detected_placeholders.values())
+            
             # Generate suggested variable names using AI
             suggested_conversions = {}
             if self.ai_enabled and placeholder_contexts:
                 suggested_conversions = self._generate_variable_names_ai(
                     placeholder_contexts,
-                    full_text[:2000]  # Send first 2000 chars for context
+                    full_text[:2000],  # Limit context to reduce tokens
+                    doc_format
                 )
             else:
                 # Fallback to basic naming
                 suggested_conversions = self._generate_variable_names_basic(detected_placeholders)
             
-            total = sum(len(v) for v in detected_placeholders.values())
-            
             return {
                 'success': True,
+                'format': doc_format,
                 'total_placeholders': total,
                 'placeholder_types': detected_placeholders,
                 'suggested_conversions': suggested_conversions,
                 'context': placeholder_contexts,
-                'document_preview': full_text[:500]
+                'document_preview': full_text[:500],
+                'metadata': extracted['metadata']
             }
             
         except Exception as e:
@@ -135,24 +141,30 @@ class TemplateConverter:
         variable_mapping: Dict[str, str]
     ) -> Dict:
         """
-        Convert template placeholders to Jinja2 format
+        Convert template placeholders to Jinja2 format (multi-format support)
+        Always outputs as DOCX regardless of input format
         
         Args:
-            doc_path: Path to original template
-            output_path: Path to save converted template
+            doc_path: Path to original template (any supported format)
+            output_path: Path to save converted template (.docx)
             variable_mapping: Dict mapping placeholders to variable names
-                Example: {'#1': 'party_name_1', '#2': 'effective_date'}
         
         Returns:
             {
                 'success': True,
                 'converted_count': 15,
                 'output_path': '...',
-                'remaining_placeholders': []
+                'format': 'pdf -> docx'
             }
         """
         try:
-            doc = Document(doc_path)
+            input_format = Path(doc_path).suffix.lower().replace('.', '')
+            
+            # Extract content from any format
+            extracted = document_extractor.extract(doc_path)
+            
+            # Create new DOCX document
+            doc = Document()
             converted_count = 0
             
             # Sort mappings by length (descending) to avoid partial replacements
@@ -163,52 +175,58 @@ class TemplateConverter:
             )
             
             # Convert paragraphs
-            for para in doc.paragraphs:
-                original_text = para.text
+            for para_text in extracted['paragraphs']:
+                converted_text = para_text
                 for placeholder, var_name in sorted_mappings:
-                    if placeholder in para.text:
-                        # Escape special regex characters in placeholder
+                    if placeholder in converted_text:
                         escaped = re.escape(placeholder)
-                        # Replace with Jinja2 syntax
-                        para.text = re.sub(
+                        new_text = re.sub(
                             escaped,
                             f"{{{{ {var_name} }}}}",
-                            para.text
+                            converted_text
                         )
-                        if para.text != original_text:
+                        if new_text != converted_text:
                             converted_count += 1
-                            logger.info(f"Converted {placeholder} → {{{{ {var_name} }}}}")
+                            logger.info(f"✓ {placeholder} → {{{{ {var_name} }}}}")
+                        converted_text = new_text
+                
+                doc.add_paragraph(converted_text)
             
             # Convert tables
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for para in cell.paragraphs:
-                            original_text = para.text
-                            for placeholder, var_name in sorted_mappings:
-                                if placeholder in para.text:
-                                    escaped = re.escape(placeholder)
-                                    para.text = re.sub(
-                                        escaped,
-                                        f"{{{{ {var_name} }}}}",
-                                        para.text
-                                    )
-                                    if para.text != original_text:
-                                        converted_count += 1
-                                        logger.info(f"Converted {placeholder} → {{{{ {var_name} }}}} (table)")
+            for table_data in extracted['tables']:
+                table = doc.add_table(rows=len(table_data), cols=len(table_data[0]) if table_data else 0)
+                for i, row_data in enumerate(table_data):
+                    for j, cell_text in enumerate(row_data):
+                        converted_text = cell_text
+                        for placeholder, var_name in sorted_mappings:
+                            if placeholder in converted_text:
+                                escaped = re.escape(placeholder)
+                                new_text = re.sub(
+                                    escaped,
+                                    f"{{{{ {var_name} }}}}",
+                                    converted_text
+                                )
+                                if new_text != converted_text:
+                                    converted_count += 1
+                                converted_text = new_text
+                        
+                        table.rows[i].cells[j].text = converted_text
             
-            # Save converted template
+            # Save as DOCX
             doc.save(output_path)
             
-            # Check for remaining unconverted placeholders
+            # Check for remaining placeholders
             remaining = self._find_remaining_placeholders(output_path)
+            
+            logger.info(f"✅ Converted {input_format} → docx ({converted_count} placeholders)")
             
             return {
                 'success': True,
                 'converted_count': converted_count,
                 'output_path': output_path,
+                'format_conversion': f'{input_format} → docx',
                 'remaining_placeholders': remaining,
-                'message': f'Successfully converted {converted_count} placeholders'
+                'message': f'Converted {converted_count} placeholders from {input_format} to Jinja2-ready DOCX'
             }
             
         except Exception as e:
@@ -238,59 +256,96 @@ class TemplateConverter:
     def _generate_variable_names_ai(
         self,
         placeholder_contexts: Dict[str, str],
-        document_preview: str
+        document_preview: str,
+        doc_format: str = 'docx'
     ) -> Dict[str, str]:
-        """Use AI to generate meaningful variable names based on context"""
+        """Use AI to generate meaningful variable names based on context (token-optimized)"""
         try:
+            # Limit contexts to reduce token usage
+            limited_contexts = dict(list(placeholder_contexts.items())[:15])
+            
             # Prepare contexts for GPT
             contexts_list = [
-                f"'{placeholder}' appears in: \"{context}\""
-                for placeholder, context in list(placeholder_contexts.items())[:20]  # Limit to 20
+                f"'{placeholder}': \"{context[:80]}...\""
+                for placeholder, context in limited_contexts.items()
             ]
             
-            prompt = f"""You are analyzing a legal document template. Generate appropriate variable names for placeholders.
+            # Concise prompt to save tokens
+            prompt = f"""Legal template analysis. Generate variable names (snake_case) for placeholders.
 
-Document preview:
-{document_preview}
+Document ({doc_format}): {document_preview[:400]}...
 
-Placeholders with context:
+Placeholders:
 {chr(10).join(contexts_list)}
 
-Generate clean, descriptive variable names (snake_case, no special chars).
+Return JSON mapping:
+{{"placeholder": "variable_name"}}
 
-Rules:
-1. Use context to infer meaning
-2. Common legal fields: party_name, effective_date, amount, address, etc.
-3. For numbered placeholders (#1, #2), use descriptive names
-4. Keep names under 30 characters
-5. Use snake_case (lowercase with underscores)
-
-Return ONLY a JSON object mapping placeholders to variable names:
-{{
-    "#1": "party_name_1",
-    "#2": "effective_date",
-    "____": "recipient_address",
-    ...
-}}"""
+Rules: snake_case, descriptive, <30 chars, legal context (party_name, date, amount, address)"""
 
             response = ai_service.chat_completion([
-                {"role": "system", "content": "You are a legal document template analyzer. Return only valid JSON."},
+                {"role": "system", "content": "Legal doc analyzer. Return JSON only."},
                 {"role": "user", "content": prompt}
-            ], temperature=0.3, max_tokens=1000)
+            ], temperature=0.3, max_tokens=800)
             
             # Parse JSON response
             match = re.search(r'\{.*\}', response, re.DOTALL)
             if match:
                 mapping = json.loads(match.group(0))
-                logger.info(f"✅ AI generated {len(mapping)} variable names")
+                logger.info(f"✅ AI generated {len(mapping)} variable names ({len(response)} tokens)")
                 return mapping
             else:
-                logger.warning("AI response not in JSON format, using fallback")
+                logger.warning("AI response not JSON, using fallback")
                 return self._generate_variable_names_basic({'mixed': list(placeholder_contexts.keys())})
                 
         except Exception as e:
-            logger.error(f"AI variable name generation failed: {e}")
+            logger.error(f"AI variable naming failed: {e}")
             return self._generate_variable_names_basic({'mixed': list(placeholder_contexts.keys())})
+    
+    def _gpt_smart_placeholder_detection(self, text_sample: str) -> Dict:
+        """
+        Use GPT-4 to intelligently detect placeholders when regex fails
+        Optimized for minimal token usage
+        """
+        try:
+            prompt = f"""Analyze this document template and identify ALL placeholders/blank fields.
+
+Document sample:
+{text_sample}
+
+Identify:
+1. Obvious blanks: ____, ...., [NAME], {{DATE}}, etc.
+2. Fields that need user input
+3. Repeating patterns that should be variables
+
+Return JSON:
+{{
+    "placeholders": {{
+        "type": ["placeholder1", "placeholder2"]
+    }},
+    "contexts": {{
+        "placeholder1": "context text"
+    }}
+}}
+
+Keep it concise."""
+
+            response = ai_service.chat_completion([
+                {"role": "system", "content": "Template analyzer. Return JSON only."},
+                {"role": "user", "content": prompt}
+            ], temperature=0.2, max_tokens=1000)
+            
+            match = re.search(r'\{.*\}', response, re.DOTALL)
+            if match:
+                result = json.loads(match.group(0))
+                logger.info(f"🤖 GPT detected {sum(len(v) for v in result.get('placeholders', {}).values())} placeholders")
+                return result
+            
+            return {'placeholders': {}, 'contexts': {}}
+            
+        except Exception as e:
+            logger.error(f"GPT smart detection failed: {e}")
+            return {'placeholders': {}, 'contexts': {}}
     
     def _generate_variable_names_basic(self, detected_placeholders: Dict) -> Dict[str, str]:
         """Fallback: Generate basic variable names without AI"""

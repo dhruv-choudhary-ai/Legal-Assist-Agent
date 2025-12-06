@@ -2760,11 +2760,13 @@ Return ONLY the template name (e.g., "Lease-Agreement") or "UNKNOWN" if unclear.
 def upload_and_analyze_template():
     """
     Upload a template file and analyze placeholders
+    Supports: DOCX, PDF, TXT, RTF, ODT formats
     
     Returns analysis of detected placeholders and suggested variable names
     """
     try:
         from ai.template_converter import template_converter
+        from ai.document_extractor import document_extractor
         
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
@@ -2774,25 +2776,31 @@ def upload_and_analyze_template():
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
         
-        # Check file extension
-        if not file.filename.lower().endswith('.docx'):
-            return jsonify({'error': 'Only .docx files are supported'}), 400
+        # Check file extension (multi-format support)
+        allowed_extensions = ['.docx', '.pdf', '.txt', '.rtf', '.odt']
+        file_ext = Path(file.filename).suffix.lower()
         
-        # Save temporarily
+        if file_ext not in allowed_extensions:
+            return jsonify({
+                'error': f'Unsupported format: {file_ext}. Supported: {", ".join(allowed_extensions)}'
+            }), 400
+        
+        # Save temporarily with correct extension
         import tempfile
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tmp:
             file.save(tmp.name)
             tmp_path = tmp.name
         
-        logger.info(f"📤 Analyzing uploaded template: {file.filename}")
+        logger.info(f"📤 Analyzing {document_extractor.get_file_format(tmp_path)}: {file.filename}")
         
-        # Analyze template
+        # Analyze template (multi-format)
         analysis = template_converter.analyze_template(tmp_path)
         
         # Store temp path for later conversion
-        if analysis['success']:
+        if analysis.get('success'):
             analysis['temp_path'] = tmp_path
             analysis['original_filename'] = file.filename
+            analysis['input_format'] = file_ext.replace('.', '')
         else:
             # Clean up on failure
             os.unlink(tmp_path)
@@ -2951,7 +2959,7 @@ def get_user_templates():
         with open(user_config_path, 'r', encoding='utf-8') as f:
             user_config = json.load(f)
         
-        # Format for frontend
+        # Format for frontend (skip metadata keys like _readme)
         templates = [
             {
                 'name': name,
@@ -2961,6 +2969,7 @@ def get_user_templates():
                 'is_user_template': True
             }
             for name, config in user_config.items()
+            if isinstance(config, dict) and not name.startswith('_')
         ]
         
         return jsonify({

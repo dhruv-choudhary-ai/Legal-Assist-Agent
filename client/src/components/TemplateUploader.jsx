@@ -17,8 +17,12 @@ const TemplateUploader = ({ onTemplateSaved }) => {
     
     if (!file) return;
     
-    if (!file.name.endsWith('.docx')) {
-      toast.error('Please upload a .docx file');
+    // Check for supported formats
+    const supportedFormats = ['.docx', '.pdf', '.txt', '.rtf', '.odt'];
+    const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    if (!supportedFormats.includes(fileExt)) {
+      toast.error(`Unsupported format. Please upload: ${supportedFormats.join(', ')}`);
       return;
     }
 
@@ -39,9 +43,9 @@ const TemplateUploader = ({ onTemplateSaved }) => {
       if (data.success) {
         setAnalysis(data);
         setVariableMapping(data.suggested_conversions || {});
-        setTemplateName(file.name.replace('.docx', ''));
+        setTemplateName(file.name.replace(/\.(docx|pdf|txt|rtf|odt)$/i, ''));
         setStep(2);
-        toast.success(`Found ${data.total_placeholders} placeholders!`);
+        toast.success(`Found ${data.total_placeholders} placeholders in ${data.format.toUpperCase()}!`);
       } else {
         toast.error(data.error || 'Failed to analyze template');
       }
@@ -172,14 +176,14 @@ const TemplateUploader = ({ onTemplateSaved }) => {
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
           <h2 className="text-3xl font-bold text-gray-800 mb-4">Upload Your Template</h2>
           <p className="text-gray-600 mb-6">
-            Upload a .docx file with placeholders (like #1, ____, [NAME], etc.) <br />
-            and we'll convert it to a Jinja2 template automatically
+            Upload a template file with placeholders (like #1, ____, [NAME], etc.) <br />
+            <strong>Supported formats:</strong> DOCX, PDF, TXT, RTF, ODT
           </p>
 
           <div className="border-4 border-dashed border-gray-300 rounded-lg p-12 hover:border-blue-500 transition-colors">
             <input
               type="file"
-              accept=".docx"
+              accept=".docx,.pdf,.txt,.rtf,.odt"
               onChange={handleFileUpload}
               className="hidden"
               id="template-upload"
@@ -191,7 +195,7 @@ const TemplateUploader = ({ onTemplateSaved }) => {
             >
               <FiUpload className="text-6xl text-gray-400" />
               <span className="text-xl font-semibold text-gray-700">
-                {loading ? 'Analyzing...' : 'Click to upload .docx file'}
+                {loading ? 'Analyzing...' : 'Click to upload template file'}
               </span>
               {uploadedFile && (
                 <span className="text-sm text-gray-500">{uploadedFile.name}</span>
