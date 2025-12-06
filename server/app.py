@@ -37,7 +37,7 @@ from ai.config import AIConfig
 from ai.rag_pipeline import rag_pipeline
 from ai.vectordb_manager import vector_db
 from ai.document_processor import doc_processor
-from ai.template_manager_v2 import get_template_manager
+from ai.template_manager import get_template_manager
 
 app = Flask(__name__)
 
@@ -2615,7 +2615,7 @@ def conversational_assembly():
     """
     try:
         from ai.variable_extractor import variable_extractor
-        from ai.template_manager_v2 import get_template_manager
+        from ai.template_manager import get_template_manager
         from ai.document_assembler import document_assembler
         
         data = request.json

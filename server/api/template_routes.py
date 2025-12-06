@@ -1,10 +1,11 @@
 """
 Template Assembly API Routes
 Adds endpoints for template-based document assembly
+NOTE: These routes use the legacy template_manager for backward compatibility
 """
 
 from flask import Blueprint, jsonify, request, send_file
-from ai.template_manager import template_manager
+from ai.template_manager_legacy import template_manager
 from ai.variable_extractor import variable_extractor
 from ai.document_assembler import document_assembler
 from pathlib import Path

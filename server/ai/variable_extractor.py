@@ -1,6 +1,7 @@
 """
 Variable Extractor - Enhanced with Smart Entity Recognition
 Extracts variables from user descriptions using GPT-4 and BGE-M3 embeddings
+NOTE: Uses legacy template_manager for metadata access
 """
 
 import logging
@@ -9,7 +10,7 @@ import re
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from .azure_openai_service import ai_service
-from .template_manager import template_manager
+from .template_manager_legacy import template_manager
 from .embedding_service import embedding_service
 
 logger = logging.getLogger(__name__)
