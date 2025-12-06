@@ -128,7 +128,7 @@
 
 ### Directory Restructuring
 **Fixed:**
-- Duplicate server/server/data directory
+- Duplicate backend/backend/data directory
 - Mixed component organization
 - Inconsistent naming conventions
 

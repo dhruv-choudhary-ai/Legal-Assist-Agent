@@ -120,7 +120,7 @@ if __name__ == "__main__":
         print("=" * 60)
         print("\nNext steps:")
         print("  1. Install auth dependencies: pip install flask-bcrypt flask-jwt-extended")
-        print("  2. Update server/app.py with authentication endpoints")
+        print("  2. Update backend/app.py with authentication endpoints")
         print("  3. Update frontend login/signup pages")
         print("  4. Test authentication flow")
     else:

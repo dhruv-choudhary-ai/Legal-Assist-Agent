@@ -134,23 +134,28 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-server/.env
+# Backend environment
+backend/.env
 
 # ChromaDB / Vector Database
 chroma_db/
-server/chroma_db/
+# Vector database (ChromaDB)
+backend/chroma_db/
 *.sqlite3
 
 # Generated Documents
 generated_documents/
-server/generated_documents/
+# Generated legal documents
+backend/generated_documents/
 test_outputs/
-server/test_outputs/
+# Test outputs
+backend/test_outputs/
 
-# User Uploaded Templates
-server/data/user_templates/
+# User uploaded templates
+backend/data/user_templates/
 user_template_config.json
-server/data/user_templates/user_template_config.json
+# User template config (generated)
+backend/data/user_templates/user_template_config.json
 
 # AI Models (if downloaded locally)
 *.model

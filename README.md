@@ -64,34 +64,24 @@ Explore the deployed website here: <a href="https://legal-documentation-assistan
 ```
 👨‍💻Legal-Documentation-Assistant
  ┣ 📂assets                            // Contains all the reference gifs, images
- ┣ 📂client                            // Frontend        
+ ┣ 📂frontend                          // React Frontend        
  ┃ ┣ 📂src                                      
  ┃ ┃ ┣ 📂components  
- ┃ ┃ ┃ ┣ 📄Chat.jsx
- ┃ ┃ ┣ 📄about.jsx
- ┃ ┃ ┣ 📄Faq.jsx
- ┃ ┃ ┣ 📄Home.jsx
- ┃ ┃ ┣ 📄InputForm.jsx
- ┃ ┃ ┣ 📄LoginPage.jsx
+ ┃ ┃ ┃ ┣ 📄ModernHome.jsx
+ ┃ ┃ ┃ ┣ 📄Dashboard.jsx
+ ┃ ┃ ┃ ┣ 📄UnifiedWorkspace.jsx
+ ┃ ┃ ┣ 📄About.jsx
+ ┃ ┃ ┣ 📄FAQ.jsx
  ┃ ┣ 📂public 
  ┃ ┃ ┣ 📄index.html
- ┣ 📂model                             // Standalone model         
- ┃ ┣ 📄similarity.py                   // Based on Cosine Similarity
- ┃ ┣ 📄bot.py    
- ┃ ┣ 📄chat.py                         // To chat with the standalone model
- ┃ ┣ 📄model.py                        // Based on Bag of Words
- ┃ ┣ 📄train.py                        
- ┃ ┣ 📄dataset.py 
- ┃ ┣ 📄util.py   
- ┃ ┣ 📄trained_model.pth
- ┃ ┣ 📄intents.json                    // Dataset 
- ┣ 📂server                            // Backend 
- ┃ ┣ 📂docs  
- ┃ ┃ ┣ 📄localfile.docx
- ┃ ┃ ┣ 📄Output2.docx
+ ┣ 📂backend                           // Python Backend 
+ ┃ ┣ 📂ai                              // AI modules
+ ┃ ┣ 📂api                             // API routes
+ ┃ ┣ 📂data                            // Templates & knowledge
  ┃ ┣ 📄app.py 
  ┃ ┣ 📄createdatabase.py  
  ┃ ┣ 📄requirements.txt      
+ ┣ 📂docs                              // Documentation
  ┣ 📄README.md
 ``` 
 
@@ -187,7 +177,9 @@ You can get all this database credentials by visiting the PostgreSQL database se
 
 Once the .env file is setup, next run the createdatabase.py script using the following command in the terminal:
 ```
-python server/createdatabase.py  
+```bash
+python backend/createdatabase.py  
+```  
 ```
 
 Running the createdatabase.py script will create the entire database for you.

@@ -172,7 +172,7 @@ Document Ready!
 ## Next Steps
 
 1. **Try it**: Run `python scripts/test_smart_assembly.py`
-2. **Customize**: Edit templates in `server/data/templates/`
+2. **Customize**: Edit templates in `backend/data/templates/`
 3. **Extend**: Add more document types
 4. **Deploy**: Ready for production!
 
@@ -180,7 +180,7 @@ Document Ready!
 
 - 📖 Full docs: See `SMART_ASSEMBLY_UPGRADE.md`
 - 🧪 Tests: Run `scripts/test_smart_assembly.py`
-- 📝 Templates: Check `server/data/templates/`
+- 📝 Templates: Check `backend/data/templates/`
 
 ---
 

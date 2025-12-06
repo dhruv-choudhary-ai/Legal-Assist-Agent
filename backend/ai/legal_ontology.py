@@ -101,7 +101,7 @@ class LegalOntology:
     
     def __init__(self, ontology_file: Optional[str] = None):
         """Initialize legal ontology"""
-        self.ontology_file = ontology_file or "server/data/legal_ontology.json"
+        self.ontology_file = ontology_file or "backend/data/legal_ontology.json"
         self.clauses: Dict[str, LegalClause] = {}
         self.taxonomy: Dict = self._build_taxonomy()
         self.load_ontology()
