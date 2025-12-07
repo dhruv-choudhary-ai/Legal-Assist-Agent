@@ -3257,6 +3257,473 @@ def delete_user_template(template_name):
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================================================
+# QUICK ACTIONS MODULE - NEW ENDPOINTS
+# ============================================================================
+
+@app.route('/api/quick-actions/ask-lawyer', methods=['POST'])
+def ask_lawyer():
+    """
+    Ask a Lawyer - Legal Q&A with conversation context
+    Uses conversation_manager + rag_pipeline for context-aware responses
+    """
+    try:
+        data = request.json
+        question = data.get('question', '').strip()
+        session_id = data.get('session_id', str(uuid.uuid4()))
+        
+        if not question:
+            return jsonify({'error': 'Question is required'}), 400
+        
+        logger.info(f"💬 Ask Lawyer - Session: {session_id}, Question: {question[:100]}")
+        
+        # Add user message to conversation history
+        conversation_manager.add_message(session_id, 'user', question)
+        
+        # Get conversation history for context
+        history = conversation_manager.get_history(session_id, max_messages=10)
+        
+        # Search legal knowledge base using RAG
+        rag_results = rag_pipeline.search(question, top_k=5)
+        
+        # Build context from RAG results
+        legal_context = "\n\n".join([
+            f"**Reference {i+1}** (Relevance: {r.get('score', 0):.2f}):\n{r.get('content', '')}"
+            for i, r in enumerate(rag_results.get('results', []))
+        ])
+        
+        # Build conversation context
+        conversation_context = "\n".join([
+            f"{msg['role'].upper()}: {msg['content']}"
+            for msg in history[-6:]  # Last 3 exchanges
+        ])
+        
+        # Create prompt
+        system_prompt = """You are an expert legal advisor providing accurate legal guidance to clients.
+
+**Guidelines:**
+- Provide clear, accurate legal information
+- Cite relevant laws, sections, or precedents when available
+- Use professional yet accessible language
+- If uncertain, clearly state limitations
+- Never provide misleading information
+- Always recommend consulting a licensed attorney for specific cases
+
+**Context from Legal Knowledge Base:**
+""" + (legal_context if legal_context else "No specific legal references found for this query.")
+        
+        user_prompt = f"""**Previous Conversation:**
+{conversation_context if len(history) > 1 else "This is the first question in this session."}
+
+**Current Question:**
+{question}
+
+**Your Response (as a legal advisor):**"""
+        
+        # Get AI response
+        response = ai_service.chat_completion([
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ], temperature=0.4, max_tokens=800)
+        
+        # Add assistant response to history
+        conversation_manager.add_message(session_id, 'assistant', response)
+        
+        return jsonify({
+            'success': True,
+            'answer': response,
+            'session_id': session_id,
+            'sources': rag_results.get('results', [])[:3],  # Top 3 sources
+            'conversation_length': len(conversation_manager.get_history(session_id))
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Ask Lawyer error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/quick-actions/document-analyzer/upload', methods=['POST'])
+def document_analyzer_upload():
+    """
+    Document Analyzer - Upload document for interactive analysis
+    Uses document_analyzer.py for RAG-based Q&A
+    """
+    try:
+        from ai.document_analyzer import document_analyzer
+        
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Save uploaded file temporarily
+        upload_dir = Path("temp_uploads")
+        upload_dir.mkdir(exist_ok=True)
+        
+        file_path = upload_dir / f"{uuid.uuid4()}_{file.filename}"
+        file.save(file_path)
+        
+        logger.info(f"📄 Analyzing document: {file.filename}")
+        
+        # Process document
+        doc_id = document_analyzer.process_document(str(file_path), file.filename)
+        
+        # Get document info
+        doc_info = document_analyzer.get_document_info(doc_id)
+        
+        # Clean up uploaded file
+        os.unlink(file_path)
+        
+        return jsonify({
+            'success': True,
+            'doc_id': doc_id,
+            'filename': file.filename,
+            'total_chunks': doc_info['total_chunks'],
+            'message': 'Document processed successfully. You can now ask questions about it.'
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Document analyzer upload error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/quick-actions/document-analyzer/query', methods=['POST'])
+def document_analyzer_query():
+    """
+    Document Analyzer - Ask questions about uploaded document
+    """
+    try:
+        from ai.document_analyzer import document_analyzer
+        
+        data = request.json
+        doc_id = data.get('doc_id')
+        question = data.get('question', '').strip()
+        
+        if not doc_id or not question:
+            return jsonify({'error': 'doc_id and question are required'}), 400
+        
+        logger.info(f"🔍 Document Query - Doc: {doc_id}, Q: {question[:100]}")
+        
+        # Answer question using RAG
+        result = document_analyzer.answer_question(doc_id, question)
+        
+        return jsonify({
+            'success': True,
+            'answer': result['answer'],
+            'sources': result['sources'],
+            'chunks_used': result['chunks_used']
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Document analyzer query error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/quick-actions/contract-review', methods=['POST'])
+def contract_review():
+    """
+    Contract Review - Comprehensive contract analysis
+    Identifies risks, missing clauses, compliance issues
+    """
+    try:
+        from ai.document_analyzer import document_analyzer
+        
+        if 'file' not in request.files:
+            return jsonify({'error': 'No contract file uploaded'}), 400
+        
+        file = request.files['file']
+        review_type = request.form.get('review_type', 'general')  # general, employment, commercial, etc.
+        
+        # Save and process document
+        upload_dir = Path("temp_uploads")
+        upload_dir.mkdir(exist_ok=True)
+        file_path = upload_dir / f"{uuid.uuid4()}_{file.filename}"
+        file.save(file_path)
+        
+        logger.info(f"⚖️ Contract Review - File: {file.filename}, Type: {review_type}")
+        
+        # Process document
+        doc_id = document_analyzer.process_document(str(file_path), file.filename)
+        
+        # Perform comprehensive analysis
+        summary = document_analyzer.summarize_document(doc_id)
+        key_clauses = document_analyzer.extract_key_clauses(doc_id)
+        risks = document_analyzer.analyze_risks(doc_id)
+        
+        # Get missing clauses based on review type
+        missing_clauses_prompt = f"""Based on this {review_type} contract summary and clauses, identify any critical missing clauses that should typically be included:
+
+**Summary:**
+{summary['summary']}
+
+**Existing Clauses:**
+{key_clauses['clauses']}
+
+**List missing clauses that are important for a {review_type} contract:**"""
+        
+        missing_clauses = ai_service.chat_completion([
+            {"role": "system", "content": "You are a contract review specialist."},
+            {"role": "user", "content": missing_clauses_prompt}
+        ], temperature=0.3, max_tokens=400)
+        
+        # Compliance check
+        compliance_prompt = f"""Review this {review_type} contract for legal compliance issues:
+
+**Summary:**
+{summary['summary']}
+
+**Clauses:**
+{key_clauses['clauses']}
+
+**Identify any potential compliance concerns:**"""
+        
+        compliance_issues = ai_service.chat_completion([
+            {"role": "system", "content": "You are a legal compliance expert."},
+            {"role": "user", "content": compliance_prompt}
+        ], temperature=0.3, max_tokens=400)
+        
+        # Clean up
+        os.unlink(file_path)
+        document_analyzer.clear_document(doc_id)
+        
+        return jsonify({
+            'success': True,
+            'filename': file.filename,
+            'review_type': review_type,
+            'summary': summary['summary'],
+            'key_clauses': key_clauses['clauses'],
+            'risks': risks['risks'],
+            'missing_clauses': missing_clauses,
+            'compliance_issues': compliance_issues,
+            'overall_assessment': 'Review completed successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Contract review error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/quick-actions/clause-search', methods=['POST'])
+def clause_search():
+    """
+    Clause Library Search - Semantic search for legal clauses
+    Uses vectordb for finding relevant pre-vetted clauses
+    """
+    try:
+        data = request.json
+        query = data.get('query', '').strip()
+        clause_type = data.get('clause_type', 'all')  # indemnity, termination, payment, etc.
+        top_k = data.get('top_k', 5)
+        
+        if not query:
+            return jsonify({'error': 'Search query is required'}), 400
+        
+        logger.info(f"📚 Clause Search - Query: {query}, Type: {clause_type}")
+        
+        # Search in vector database
+        search_query = f"{clause_type} clause: {query}" if clause_type != 'all' else query
+        results = rag_pipeline.search(search_query, top_k=top_k)
+        
+        # Format results
+        clauses = []
+        for i, result in enumerate(results.get('results', [])):
+            clauses.append({
+                'rank': i + 1,
+                'clause_text': result.get('content', ''),
+                'relevance_score': result.get('score', 0),
+                'source': result.get('metadata', {}).get('source', 'Legal Knowledge Base'),
+                'clause_type': result.get('metadata', {}).get('type', 'General')
+            })
+        
+        return jsonify({
+            'success': True,
+            'query': query,
+            'clause_type': clause_type,
+            'clauses': clauses,
+            'total_found': len(clauses)
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Clause search error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/quick-actions/legal-research', methods=['POST'])
+def legal_research():
+    """
+    Legal Research Assistant - Research legal topics
+    Uses RAG pipeline to search across legal knowledge base
+    """
+    try:
+        data = request.json
+        topic = data.get('topic', '').strip()
+        jurisdiction = data.get('jurisdiction', 'India')
+        depth = data.get('depth', 'moderate')  # brief, moderate, comprehensive
+        
+        if not topic:
+            return jsonify({'error': 'Research topic is required'}), 400
+        
+        logger.info(f"🔬 Legal Research - Topic: {topic}, Jurisdiction: {jurisdiction}")
+        
+        # Search knowledge base
+        search_results = rag_pipeline.search(f"{topic} {jurisdiction}", top_k=8)
+        
+        # Build research context
+        research_context = "\n\n".join([
+            f"**Source {i+1}:**\n{r.get('content', '')}"
+            for i, r in enumerate(search_results.get('results', []))
+        ])
+        
+        # Determine max_tokens based on depth
+        depth_tokens = {'brief': 400, 'moderate': 700, 'comprehensive': 1200}
+        max_tokens = depth_tokens.get(depth, 700)
+        
+        # Generate research summary
+        research_prompt = f"""Conduct legal research on the following topic:
+
+**Topic:** {topic}
+**Jurisdiction:** {jurisdiction}
+**Depth Required:** {depth}
+
+**Available Legal References:**
+{research_context if research_context else "Limited references available in knowledge base."}
+
+**Provide a well-structured legal research summary including:**
+1. Overview of the legal topic
+2. Relevant laws, sections, or regulations
+3. Key principles and precedents
+4. Practical implications
+5. Current legal position
+
+**Research Summary:**"""
+        
+        research_summary = ai_service.chat_completion([
+            {"role": "system", "content": "You are a legal research assistant providing comprehensive legal analysis."},
+            {"role": "user", "content": research_prompt}
+        ], temperature=0.4, max_tokens=max_tokens)
+        
+        return jsonify({
+            'success': True,
+            'topic': topic,
+            'jurisdiction': jurisdiction,
+            'depth': depth,
+            'research_summary': research_summary,
+            'sources': search_results.get('results', [])[:5],
+            'sources_count': len(search_results.get('results', []))
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Legal research error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/quick-actions/smart-form-fill', methods=['POST'])
+def smart_form_fill():
+    """
+    Smart Form Filler - Extract form data from natural language
+    Uses conversation_manager for multi-turn extraction
+    """
+    try:
+        data = request.json
+        form_type = data.get('form_type', 'general')
+        user_input = data.get('user_input', '').strip()
+        session_id = data.get('session_id', str(uuid.uuid4()))
+        
+        if not user_input:
+            return jsonify({'error': 'User input is required'}), 400
+        
+        logger.info(f"📝 Smart Form Fill - Type: {form_type}, Input: {user_input[:100]}")
+        
+        # Add to conversation
+        conversation_manager.add_message(session_id, 'user', user_input)
+        
+        # Get form template fields based on type
+        form_templates = {
+            'employment': ['employee_name', 'employer_name', 'designation', 'salary', 'start_date', 'location'],
+            'rental': ['tenant_name', 'landlord_name', 'property_address', 'monthly_rent', 'security_deposit', 'lease_duration'],
+            'nda': ['party1_name', 'party2_name', 'effective_date', 'purpose', 'duration'],
+            'general': ['party1', 'party2', 'date', 'subject', 'terms']
+        }
+        
+        required_fields = form_templates.get(form_type, form_templates['general'])
+        
+        # Extract values using GPT
+        extraction_prompt = f"""Extract the following information from the user's input for a {form_type} form:
+
+**User Input:**
+{user_input}
+
+**Required Fields:**
+{', '.join(required_fields)}
+
+**Extract available values in JSON format. If a field is not mentioned, use null:**
+```json
+{{
+  "extracted_fields": {{
+    // field_name: value or null
+  }},
+  "missing_fields": [],
+  "confidence": "high/medium/low"
+}}
+```
+
+**Extraction Result:**"""
+        
+        extraction_result = ai_service.chat_completion([
+            {"role": "system", "content": "You are a form data extraction specialist. Return valid JSON only."},
+            {"role": "user", "content": extraction_prompt}
+        ], temperature=0.2, max_tokens=500)
+        
+        # Parse JSON response
+        try:
+            # Extract JSON from response
+            json_match = re.search(r'\{[\s\S]*\}', extraction_result)
+            if json_match:
+                extracted_data = json.loads(json_match.group())
+            else:
+                extracted_data = {'extracted_fields': {}, 'missing_fields': required_fields, 'confidence': 'low'}
+        except:
+            extracted_data = {'extracted_fields': {}, 'missing_fields': required_fields, 'confidence': 'low'}
+        
+        return jsonify({
+            'success': True,
+            'form_type': form_type,
+            'session_id': session_id,
+            'extracted_data': extracted_data,
+            'required_fields': required_fields
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Smart form fill error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/quick-actions/session/clear', methods=['POST'])
+def clear_quick_action_session():
+    """Clear conversation session for quick actions"""
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        
+        if session_id:
+            conversation_manager.clear_session(session_id)
+            logger.info(f"🗑️ Cleared session: {session_id}")
+            return jsonify({'success': True, 'message': 'Session cleared'})
+        
+        return jsonify({'error': 'session_id required'}), 400
+        
+    except Exception as e:
+        logger.error(f"❌ Clear session error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# END QUICK ACTIONS MODULE
+# ============================================================================
+
+
 if __name__ == '__main__':
     logger.info("="*60)
     logger.info("🌐 Starting Flask Server...")

@@ -19,15 +19,21 @@ import ModernChat from "./components/ModernChat";
 import UnifiedWorkspace from "./components/UnifiedWorkspace";
 import TemplateManager from "./components/TemplateManager";
 import TemplateUploader from "./components/TemplateUploader";
+import AskLawyerChat from "./components/AskLawyerChat";
+import DocumentAnalyzerPanel from "./components/DocumentAnalyzerPanel";
+import ContractReviewPanel from "./components/ContractReviewPanel";
+import ClauseSearchPanel from "./components/ClauseSearchPanel";
+import LegalResearchPanel from "./components/LegalResearchPanel";
 
 function AppContent() {
   const location = useLocation();
   const isWorkspace = location.pathname === '/workspace';
+  const isQuickAction = location.pathname.startsWith('/quick-actions');
 
   return (
     <>
-      {!isWorkspace && <ModernNavbar />}
-      {!isWorkspace && <ModernChat />}
+      {!isWorkspace && !isQuickAction && <ModernNavbar />}
+      {!isWorkspace && !isQuickAction && <ModernChat />}
       <Routes>
         <Route path="/" element={<ModernHome />} />
         <Route path="/dashboard" element={<Dashboard />} />
@@ -38,9 +44,14 @@ function AppContent() {
         <Route path="/faq" element={<Faq />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/quick-actions/ask-lawyer" element={<AskLawyerChat />} />
+        <Route path="/quick-actions/document-analyzer" element={<DocumentAnalyzerPanel />} />
+        <Route path="/quick-actions/contract-review" element={<ContractReviewPanel />} />
+        <Route path="/quick-actions/clause-search" element={<ClauseSearchPanel />} />
+        <Route path="/quick-actions/legal-research" element={<LegalResearchPanel />} />
       </Routes>
       <ToastContainer />
-      {!isWorkspace && <Footer />}
+      {!isWorkspace && !isQuickAction && <Footer />}
     </>
   );
 }

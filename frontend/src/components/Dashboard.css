@@ -117,14 +117,14 @@
 
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
 }
 
 .action-card {
   background: white;
   border-radius: 16px;
-  padding: 2rem;
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -161,21 +161,26 @@
 .action-card.action-purple { --action-color: #a855f7; }
 .action-card.action-green { --action-color: #10b981; }
 .action-card.action-orange { --action-color: #f97316; }
+.action-card.action-violet { --action-color: #8b5cf6; }
+.action-card.action-indigo { --action-color: #6366f1; }
+.action-card.action-teal { --action-color: #14b8a6; }
+.action-card.action-cyan { --action-color: #06b6d4; }
 
 .action-icon {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--action-color);
   color: white;
+  flex-shrink: 0;
 }
 
 .action-icon svg {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
 }
 
 .action-content h3 {

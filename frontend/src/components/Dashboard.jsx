@@ -56,25 +56,93 @@ const Dashboard = () => {
 
   const quickActions = [
     {
-      title: 'Analyze Document',
-      description: 'Review contracts & agreements',
+      title: 'Ask a Lawyer',
+      description: 'Legal Q&A with AI advisor',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15.5 14H14.71L14.43 13.73C15.41 12.59 16 11.11 16 9.5C16 5.91 13.09 3 9.5 3C5.91 3 3 5.91 3 9.5C3 13.09 5.91 16 9.5 16C11.11 16 12.59 15.41 13.73 14.43L14 14.71V15.5L19 20.49L20.49 19L15.5 14Z" fill="currentColor" />
+          <path d="M12 3C10.9 3 10 3.9 10 5C10 5.5 10.2 6 10.5 6.4L9 9H15L13.5 6.4C13.8 6 14 5.5 14 5C14 3.9 13.1 3 12 3ZM7 10L5 14V22H19V14L17 10H7ZM9 18H7V16H9V18ZM13 18H11V12H13V18ZM17 18H15V14H17V18Z" fill="currentColor"/>
         </svg>
       ),
+      link: '/quick-actions/ask-lawyer',
+      color: 'purple'
+    },
+    {
+      title: 'Document Analyzer',
+      description: 'Upload & analyze documents',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM8 15.5L9.5 17L12.5 14L16 17.5L17.5 16L12.5 11L8 15.5Z" fill="currentColor"/>
+        </svg>
+      ),
+      link: '/quick-actions/document-analyzer',
       color: 'green'
     },
     {
-      title: 'Browse Services',
-      description: 'View all legal services',
+      title: 'Contract Review',
+      description: 'AI-powered contract analysis',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z" fill="currentColor" />
+          <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM10 19L15 14L13.59 12.59L10 16.17L8.41 14.59L7 16L10 19Z" fill="currentColor"/>
+        </svg>
+      ),
+      link: '/quick-actions/contract-review',
+      color: 'orange'
+    },
+    {
+      title: 'Clause Search',
+      description: 'Find legal clauses instantly',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 6H19V15H21V6ZM17 6H15V15H17V6ZM22 4V17C22 18.1 21.1 19 20 19H4C2.9 19 2 18.1 2 17V4C2 2.9 2.9 2 4 2H20C21.1 2 22 2.9 22 4ZM20 4H4V17H20V4ZM11.25 8.5L8.5 12.5L6.25 9.75L3 14H14L11.25 8.5ZM16 21H8V22H16V21Z" fill="currentColor"/>
+        </svg>
+      ),
+      link: '/quick-actions/clause-search',
+      color: 'violet'
+    },
+    {
+      title: 'Legal Research',
+      description: 'Research legal topics',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 5C19.89 4.65 18.67 4.5 17.5 4.5C15.55 4.5 13.45 4.9 12 6C10.55 4.9 8.45 4.5 6.5 4.5C4.55 4.5 2.45 4.9 1 6V20.65C1 20.9 1.25 21.15 1.5 21.15C1.6 21.15 1.65 21.1 1.75 21.1C3.1 20.45 5.05 20 6.5 20C8.45 20 10.55 20.4 12 21.5C13.35 20.65 15.8 20 17.5 20C19.15 20 20.85 20.3 22.25 21.05C22.35 21.1 22.4 21.1 22.5 21.1C22.75 21.1 23 20.85 23 20.6V6C22.4 5.55 21.75 5.25 21 5ZM21 18.5C19.9 18.15 18.7 18 17.5 18C15.8 18 13.35 18.65 12 19.5V8C13.35 7.15 15.8 6.5 17.5 6.5C18.7 6.5 19.9 6.65 21 7V18.5Z" fill="currentColor"/>
+        </svg>
+      ),
+      link: '/quick-actions/legal-research',
+      color: 'blue'
+    },
+    {
+      title: 'Create Document',
+      description: 'Generate legal documents',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM11 13H13V18H15L12 21L9 18H11V13Z" fill="currentColor"/>
+        </svg>
+      ),
+      link: '/workspace',
+      color: 'indigo'
+    },
+    {
+      title: 'Browse Templates',
+      description: 'View all templates',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19ZM7 10H9V17H7V10ZM11 7H13V17H11V7ZM15 13H17V17H15V13Z" fill="currentColor"/>
+        </svg>
+      ),
+      link: '/templates',
+      color: 'teal'
+    },
+    {
+      title: 'Compare Documents',
+      description: 'Side-by-side comparison',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 3H14.82C14.4 1.84 13.3 1 12 1C10.7 1 9.6 1.84 9.18 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H9.11C9.56 22.19 10.69 23 12 23C13.31 23 14.44 22.19 14.89 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM12 3C12.55 3 13 3.45 13 4C13 4.55 12.55 5 12 5C11.45 5 11 4.55 11 4C11 3.45 11.45 3 12 3ZM7 7H17V9H7V7ZM10 12H7V10H10V12ZM14 15H7V13H14V15ZM17 17H7V15H17V17Z" fill="currentColor"/>
         </svg>
       ),
       link: '/',
-      color: 'orange'
+      color: 'cyan',
+      onClick: () => alert('Document comparison coming soon!')
     }
   ];
 
@@ -123,13 +191,17 @@ const Dashboard = () => {
               to={action.link || '#'} 
               className={`action-card action-${action.color}`}
               onClick={(e) => {
-                if (!action.link) {
+                if (action.onClick) {
                   e.preventDefault();
-                  // Open chat or other functionality
+                  action.onClick();
+                } else if (!action.link) {
+                  e.preventDefault();
                 }
               }}
             >
-              <div className="action-icon">{action.icon}</div>
+              <div className="action-icon">
+                {action.icon}
+              </div>
               <div className="action-content">
                 <h3>{action.title}</h3>
                 <p>{action.description}</p>
