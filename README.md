@@ -1,17 +1,14 @@
-# Legal-Documentation-Assistant
+# Legal AI by AILifeBot
 
 ## Table of Contents
 
-- [Project](#legal-documentation-assistant)
+- [Project](#legal-ai-by-ailifebot)
   - [Table of Contents](#table-of-contents)
   - [About The Project](#about-the-project)
   - [Demo](#demo)
   - [Tech Stack](#tech-stack)
   - [File Structure](#file-structure)
-  - [Getting started](#getting-started)
-  - [Screenshots of Website](#screenshots-of-the-website)
-  - [Contributors](#contributors)
-  - [References](#references)
+  - [Getting Started](#getting-started)
   - [License](#license)
 
 ## About The Project
@@ -22,19 +19,19 @@ Legal documentation can be a complicated and time-consuming process, especially 
 
 **Key Features**: 
 
-1. **🤖 Conversational AI Assistant**: Simply describe what you need in plain English - the AI understands your intent and guides you through the process.
+1. **Conversational AI Assistant**: Simply describe what you need in plain English - the AI understands your intent and guides you through the process.
 
-2. **🧠 Smart Field Extraction**: Automatically extracts relevant information from your initial request, minimizing repetitive questions.
+2. **Smart Field Extraction**: Automatically extracts relevant information from your initial request, minimizing repetitive questions.
 
-3. **📚 RAG-Powered Knowledge Base**: Leverages ChromaDB vector database with legal knowledge, precedents, and templates for accurate document generation.
+3. **RAG-Powered Knowledge Base**: Leverages ChromaDB vector database with legal knowledge, precedents, and templates for accurate document generation.
 
-4. **✨ Intelligent Template Matching**: AI automatically selects the most appropriate legal document template based on your description.
+4. **Intelligent Template Matching**: AI automatically selects the most appropriate legal document template based on your description.
 
-5. **📝 Custom Template Support**: Upload and use your own legal templates with AI-powered field detection.
+5. **Custom Template Support**: Upload and use your own legal templates with AI-powered field detection.
 
-6. **🎨 Modern Interactive Workspace**: Real-time document preview, chat-based editing, and seamless workflow.
+6. **Modern Interactive Workspace**: Real-time document preview, chat-based editing, and seamless workflow.
 
-7. **💾 Document Management**: Save, edit, and download documents in multiple formats (DOCX, PDF).
+7. **Document Management**: Save, edit, and download documents in multiple formats (DOCX, PDF).
 
 **Impact**: This AI-first approach democratizes access to legal documentation, making it faster, more affordable, and accessible to everyone - from individuals to small businesses across India.
 
@@ -42,17 +39,15 @@ Legal documentation can be a complicated and time-consuming process, especially 
 
 ## Demo
 
-🎥 Video Walkthrough
+Video Walkthrough
 
 Check out a live demonstration of the project in action: https://github.com/PritK99/Legal-Documentation-Assistant/assets/103848930/023f19a9-dea2-458b-ae53-6f6c7f36d74f
 
-🌐 Live Website
+Live Website
 
-Explore the deployed website here: <a href="https://legal-documentation-assistant-frontend.onrender.com">https://legal-documentation-assistant-frontend.onrender.com
-</a>
+Explore the deployed website here: <a href="https://legal-documentation-assistant-frontend.onrender.com">https://legal-documentation-assistant-frontend.onrender.com</a>
 
-> **Note** <br>
-> The server may take a few minutes to launch, as we are using a free service provided by Render. Please note that this service is only available for 30 days, so access might be unavailable if the free period has expired.
+> **Note**: The server may take a few minutes to launch, as we are using a free service provided by Render. Please note that this service is only available for 30 days, so access might be unavailable if the free period has expired.
 
 ## Tech Stack
 
@@ -78,44 +73,44 @@ Explore the deployed website here: <a href="https://legal-documentation-assistan
 
 ## File Structure
 ```
-👨‍💻Legal-Documentation-Assistant
- ┣ 📂assets                            // Reference images & demos
- ┣ 📂frontend                          // React Frontend        
- ┃ ┣ 📂src                                      
- ┃ ┃ ┣ 📂components  
- ┃ ┃ ┃ ┣ 📄ModernHome.jsx              // Landing page
- ┃ ┃ ┃ ┣ 📄Dashboard.jsx               // User dashboard
- ┃ ┃ ┃ ┣ 📄PromptModal.jsx             // Initial prompt interface
- ┃ ┃ ┃ ┣ 📄WorkspaceAssistant.jsx     // AI conversational workspace
- ┃ ┃ ┃ ┣ 📄DocumentEditor.jsx         // Document preview & edit
- ┃ ┃ ┃ ┣ 📄About.jsx, FAQ.jsx
- ┃ ┃ ┣ 📂context
- ┃ ┃ ┃ ┣ 📄WorkspaceContext.jsx       // Global state management
- ┃ ┃ ┣ 📄App.js
- ┃ ┣ 📂public 
- ┃ ┃ ┣ 📄index.html
- ┣ 📂backend                           // Python Backend 
- ┃ ┣ 📂ai                              // AI/ML modules
- ┃ ┃ ┣ 📄azure_openai_service.py      // GPT-4o integration
- ┃ ┃ ┣ 📄rag_pipeline.py              // RAG implementation
- ┃ ┃ ┣ 📄document_assembler.py        // Smart document assembly
- ┃ ┃ ┣ 📄embedding_service.py         // Vector embeddings
- ┃ ┃ ┣ 📄vectordb_manager.py          // ChromaDB management
- ┃ ┃ ┣ 📄template_manager.py          // Template handling
- ┃ ┣ 📂api                             // API routes
- ┃ ┃ ┣ 📄template_routes.py
- ┃ ┣ 📂data                            // Legal data & templates
- ┃ ┃ ┣ 📂templates                    // Jinja2 templates
- ┃ ┃ ┣ 📂legal_knowledge              // Legal knowledge base
- ┃ ┃ ┣ 📂precedents                   // Legal precedents
- ┃ ┣ 📂chroma_db                       // Vector database
- ┃ ┣ 📄app.py                         // Flask application
- ┃ ┣ 📄auth_database.py               // User authentication
- ┃ ┣ 📄createdatabase.py              // Database setup
- ┃ ┣ 📄requirements.txt      
- ┣ 📂docs                              // Documentation
- ┃ ┣ 📄API.md, ARCHITECTURE.md
- ┣ 📄README.md, QUICK_START.md
+Legal-AI-by-AILifeBot
+ ┣ assets                            // Reference images & demos
+ ┣ frontend                          // React Frontend        
+ ┃ ┣ src                                      
+ ┃ ┃ ┣ components  
+ ┃ ┃ ┃ ┣ ModernHome.jsx              // Landing page
+ ┃ ┃ ┃ ┣ Dashboard.jsx               // User dashboard
+ ┃ ┃ ┃ ┣ PromptModal.jsx             // Initial prompt interface
+ ┃ ┃ ┃ ┣ WorkspaceAssistant.jsx     // AI conversational workspace
+ ┃ ┃ ┃ ┣ DocumentEditor.jsx         // Document preview & edit
+ ┃ ┃ ┃ ┣ About.jsx, FAQ.jsx
+ ┃ ┃ ┣ context
+ ┃ ┃ ┃ ┣ WorkspaceContext.jsx       // Global state management
+ ┃ ┃ ┣ App.js
+ ┃ ┣ public 
+ ┃ ┃ ┣ index.html
+ ┣ backend                           // Python Backend 
+ ┃ ┣ ai                              // AI/ML modules
+ ┃ ┃ ┣ azure_openai_service.py      // GPT-4o integration
+ ┃ ┃ ┣ rag_pipeline.py              // RAG implementation
+ ┃ ┃ ┣ document_assembler.py        // Smart document assembly
+ ┃ ┃ ┣ embedding_service.py         // Vector embeddings
+ ┃ ┃ ┣ vectordb_manager.py          // ChromaDB management
+ ┃ ┃ ┣ template_manager.py          // Template handling
+ ┃ ┣ api                             // API routes
+ ┃ ┃ ┣ template_routes.py
+ ┃ ┣ data                            // Legal data & templates
+ ┃ ┃ ┣ templates                    // Jinja2 templates
+ ┃ ┃ ┣ legal_knowledge              // Legal knowledge base
+ ┃ ┃ ┣ precedents                   // Legal precedents
+ ┃ ┣ chroma_db                       // Vector database
+ ┃ ┣ app.py                         // Flask application
+ ┃ ┣ auth_database.py               // User authentication
+ ┃ ┣ createdatabase.py              // Database setup
+ ┃ ┣ requirements.txt      
+ ┣ docs                              // Documentation
+ ┃ ┣ API.md, ARCHITECTURE.md
+ ┣ README.md, QUICK_START.md
 ``` 
 
 ## Getting Started
@@ -231,46 +226,6 @@ python backend/createdatabase.py
 3. Run `python backend/createdatabase.py`
 
 > **Note**: Database is only required for user authentication and document storage. The AI features work independently.
-
-## Screenshots of the Platform
-
-- #### Modern Home Page
-
-    ![home](./assets/image.png)
-
-- #### AI Prompt Interface
-
-    Interactive modal where users describe their legal document needs in plain English.
-
-- #### Conversational Workspace
-
-    AI assistant guides users through document creation with smart questions and real-time feedback.
-
-- #### Document Editor & Preview
-
-    Live document preview with editing capabilities and download options (DOCX, PDF).
-    ![doc_editor](./assets/image-4.png)
-
-- #### Dashboard
-
-    Manage saved documents, custom templates, and document history.
-    ![forms](./assets/image-1.png)
-
-- #### FAQ & About Pages
-
-    ![faq](./assets/image-7.png)
-    ![about_page](./assets/image-5.png)
-
-## Contributors
-- [Devayani Chandane](https://github.com/devayani03)
-- [Kavan Gandhi](https://github.com/KGan31)
-- [Mihir Rathod](https://github.com/m-g-rathod)
-- [Prit Kanadiya](https://github.com/PritK99)
-- [Shardul Khade](https://github.com/shark-21)
-- [Vedant Nimje](https://github.com/vrnimje)
-
-## References
-- [LawRato](https://lawrato.com/legal-documents) for the dataset of legal documents.
 
 ## License
 [MIT License](https://opensource.org/licenses/MIT)
