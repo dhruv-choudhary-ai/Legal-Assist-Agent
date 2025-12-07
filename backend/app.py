@@ -1158,6 +1158,7 @@ Return ONLY a valid JSON object with this exact structure:
 
 
 @app.route('/api/document/generate-from-template', methods=['POST'])
+@jwt_required()
 def generate_from_template():
     """
     Generate a filled document from Jinja2 template
@@ -1176,6 +1177,7 @@ def generate_from_template():
     
     Returns: Filled document as .docx file or HTML preview
     """
+    conn = None
     try:
         data = request.json
         template_name = data.get('template_name', '')
@@ -1186,6 +1188,9 @@ def generate_from_template():
             return jsonify({'error': 'Template name required'}), 400
         
         logger.info(f"📄 Generating document from template: {template_name}")
+        
+        # Get user ID from JWT
+        user_id = get_jwt_identity()
         
         # Get template manager
         tm = get_template_manager()
@@ -1203,6 +1208,32 @@ def generate_from_template():
             
             filled_doc.save(output_path)
             logger.info(f"✅ Document saved: {output_path}")
+            
+            # Save document to database
+            try:
+                conn = get_db_connection()
+                if conn:
+                    # Read the document content for storage
+                    with open(output_path, 'rb') as f:
+                        result = mammoth.convert_to_html(f)
+                        document_content = result.value
+                    
+                    cur = conn.cursor()
+                    cur.execute(
+                        """INSERT INTO user_documents (user_id, form_name, content)
+                           VALUES (%s, %s, %s)
+                           RETURNING doc_id""",
+                        (user_id, template_name, document_content)
+                    )
+                    doc_id = cur.fetchone()[0]
+                    conn.commit()
+                    cur.close()
+                    logger.info(f"✅ Document saved to database with doc_id: {doc_id}")
+                else:
+                    logger.warning("⚠️ Database not available - document not saved to history")
+            except Exception as db_error:
+                logger.error(f"❌ Database save error: {db_error}")
+                # Continue anyway - don't fail document generation
             
             if return_format == 'docx':
                 # Return as downloadable file
@@ -1234,6 +1265,9 @@ def generate_from_template():
     except Exception as e:
         logger.error(f"❌ Document generation error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            release_db_connection(conn)
 
 
 @app.route('/api/document/validate', methods=['POST'])
@@ -2613,14 +2647,17 @@ def get_profile():
 @jwt_required()
 def get_user_documents():
     """Get user's document history"""
+    conn = None
     try:
-        if db is None:
-            return jsonify({'error': 'Service temporarily unavailable. Please try again later.'}), 503
+        conn = get_db_connection()
+        if conn is None:
+            logger.error("❌ Database not available for fetching user documents")
+            return jsonify({'error': 'Database service temporarily unavailable. Please ensure the database is running.'}), 503
         
         user_id = get_jwt_identity()
         logger.info(f"📄 Fetching documents for user_id: {user_id}")
         
-        cur = db.cursor()
+        cur = conn.cursor()
         cur.execute(
             """SELECT doc_id, form_name, created_at, updated_at 
                FROM user_documents 
@@ -2651,6 +2688,9 @@ def get_user_documents():
     except Exception as e:
         logger.error(f"❌ Documents error: {str(e)}")
         return jsonify({'error': 'Failed to fetch documents'}), 500
+    finally:
+        if conn:
+            release_db_connection(conn)
 
 
 @app.route('/api/document/simple-chat', methods=['POST'])

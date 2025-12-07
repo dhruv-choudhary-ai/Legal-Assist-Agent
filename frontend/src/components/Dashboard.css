@@ -2,6 +2,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
   padding: 2rem 1.5rem;
+  padding-top: 6rem;
   padding-bottom: 1rem;
 }
 
@@ -57,6 +58,7 @@
   font-size: 1.1rem;
   opacity: 0.95;
   margin-bottom: 1.5rem;
+  color: #f5deb3;
 }
 
 .create-doc-cta {

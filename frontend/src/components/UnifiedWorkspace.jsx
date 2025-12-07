@@ -16,6 +16,8 @@ const UnifiedWorkspace = () => {
     isValidating
   } = useWorkspace();
   const [isAssistantCollapsed, setIsAssistantCollapsed] = useState(false);
+  const [editorWidth, setEditorWidth] = useState(60); // Default 60%
+  const [isResizing, setIsResizing] = useState(false);
 
   // Handle initial prompt from PromptModal
   useEffect(() => {
@@ -25,6 +27,43 @@ const UnifiedWorkspace = () => {
       console.log('Workspace opened with prompt:', initialPrompt);
     }
   }, [location.state]);
+
+  // Handle resize
+  const handleMouseDown = (e) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      const container = document.querySelector('.workspace-content');
+      if (!container) return;
+      
+      const containerRect = container.getBoundingClientRect();
+      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      
+      // Limit between 30% and 80%
+      if (newWidth >= 30 && newWidth <= 80) {
+        setEditorWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   return (
     <div className="unified-workspace">
@@ -56,11 +95,25 @@ const UnifiedWorkspace = () => {
 
       {/* Main Content - Always show split view */}
       <div className="workspace-content">
-        <div className={`workspace-split ${isAssistantCollapsed ? 'assistant-collapsed' : ''} ${isValidating ? 'validating' : ''}`}>
+        <div 
+          className={`workspace-split ${isAssistantCollapsed ? 'assistant-collapsed' : ''} ${isValidating ? 'validating' : ''} ${isResizing ? 'resizing' : ''}`}
+          style={!isAssistantCollapsed ? { gridTemplateColumns: `${editorWidth}% ${100 - editorWidth}%` } : {}}
+        >
           {/* Left Panel - Document Viewer/Editor */}
           <div className="workspace-panel workspace-editor-panel">
             <DocumentEditor />
           </div>
+
+          {/* Resizable Divider */}
+          {!isAssistantCollapsed && (
+            <div 
+              className="workspace-divider"
+              onMouseDown={handleMouseDown}
+              style={{ left: `${editorWidth}%` }}
+            >
+              <div className="divider-handle"></div>
+            </div>
+          )}
 
           {/* Right Panel - AI Assistant */}
           <div className="workspace-panel workspace-assistant-panel">

@@ -97,7 +97,7 @@ const ModernNavbar = () => {
               <span className="user-welcome">
                 Hello, <strong>{user.full_name || user.email}</strong>
               </span>
-              <button onClick={logout} className="btn btn-ghost">
+              <button onClick={logout} className="btn btn-danger">
                 Logout
               </button>
             </>
@@ -152,7 +152,7 @@ const ModernNavbar = () => {
                     logout();
                     setIsMobileMenuOpen(false);
                   }} 
-                  className="btn btn-outline"
+                  className="btn btn-danger"
                 >
                   Logout
                 </button>

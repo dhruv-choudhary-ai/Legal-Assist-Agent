@@ -419,11 +419,15 @@ Let me analyze your request to extract the information you've already provided..
     setIsTyping(true);
 
     try {
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('token');
+      
       // Call backend API to generate document from Jinja2 template
       const response = await fetch('http://localhost:5000/api/document/generate-from-template', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
           template_name: template.name,

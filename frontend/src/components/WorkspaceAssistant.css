@@ -203,7 +203,7 @@
 }
 
 .assistant-message.user .message-avatar {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border: none;
 }
 
@@ -240,9 +240,9 @@
 }
 
 .assistant-message.user .message-bubble {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
   border: none;
 }
 
@@ -258,6 +258,12 @@
 .message-text h1 {
   font-size: 1.125rem;
   color: #1e293b;
+}
+
+.assistant-message.user .message-text h1,
+.assistant-message.user .message-text h2,
+.assistant-message.user .message-text h3 {
+  color: white;
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 0.375rem;
 }
@@ -327,6 +333,14 @@
   font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+
+.assistant-message.user .message-bubble p,
+.assistant-message.user .message-text,
+.assistant-message.user .message-text strong,
+.assistant-message.user .message-text em,
+.assistant-message.user .message-text li {
+  color: white;
 }
 
 .message-sources {

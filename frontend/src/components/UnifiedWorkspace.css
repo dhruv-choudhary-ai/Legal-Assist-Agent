@@ -174,10 +174,21 @@
   width: 100%;
   height: 100%;
   transition: grid-template-columns 0.3s ease;
+  position: relative;
 }
 
 .workspace-split.assistant-collapsed {
   grid-template-columns: 1fr 48px;
+}
+
+.workspace-split.resizing {
+  transition: none;
+  user-select: none;
+}
+
+.workspace-split.resizing * {
+  cursor: col-resize !important;
+  user-select: none;
 }
 
 .workspace-panel {
@@ -188,6 +199,44 @@
 
 .workspace-editor-panel {
   border-right: 1px solid #e2e8f0;
+}
+
+/* Resizable Divider */
+.workspace-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  transform: translateX(-3px);
+  cursor: col-resize;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.workspace-divider:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+.workspace-divider:hover .divider-handle {
+  opacity: 1;
+  background-color: #667eea;
+}
+
+.workspace-divider:active {
+  background-color: rgba(102, 126, 234, 0.2);
+}
+
+.divider-handle {
+  width: 2px;
+  height: 40px;
+  background-color: #cbd5e1;
+  border-radius: 2px;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  pointer-events: none;
 }
 
 .workspace-assistant-panel {
