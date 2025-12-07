@@ -74,6 +74,7 @@ def token_required(fn):
 
     @wraps(fn)
     def wrapper(*args, **kwargs):
+        conn = None
         try:
             # Ensure a valid JWT is present in the request
             verify_jwt_in_request()
@@ -85,13 +86,14 @@ def token_required(fn):
             except Exception:
                 user_id = user_identity
 
-            # Check if database is available
-            if db is None:
+            # Get database connection
+            conn = get_db_connection()
+            if conn is None:
                 logger.error("Database not available for authentication")
                 return jsonify({'error': 'Service temporarily unavailable'}), 503
 
             # Fetch user details from the database
-            cur = db.cursor()
+            cur = conn.cursor()
             cur.execute(
                 "SELECT user_id, email, full_name, is_active FROM users WHERE user_id = %s AND is_active = TRUE",
                 (user_id,)
@@ -115,6 +117,9 @@ def token_required(fn):
         except Exception as e:
             logger.warning(f"Unauthorized access or invalid token: {e}")
             return jsonify({'error': 'Authorization required'}), 401
+        finally:
+            if conn is not None:
+                release_db_connection(conn)
 
     return wrapper
 
@@ -150,48 +155,81 @@ else:
     logger.error("❌ Azure OpenAI not configured - Please set up .env file")
 logger.info("="*60)
 
-# Database connection with error handling
+# Database connection pool
+from psycopg2 import pool
+db_pool = None
+
 try:
-    db = psycopg2.connect(
-        database=os.getenv('DATABASE_NAME'), 
+    db_pool = pool.SimpleConnectionPool(
+        1,  # Minimum connections
+        20,  # Maximum connections
+        database=os.getenv('DATABASE_NAME'),
         user=os.getenv('DATABASE_USER'),
-        password=os.getenv('PASSWORD'), 
-        host=os.getenv('DATABASE_HOST'), 
-        port=os.getenv('DATABASE_PORT'), 
-        sslmode='require',  # SSL mode for Render.com
-        connect_timeout=10,  # Connection timeout in seconds
-        keepalives=1, 
+        password=os.getenv('PASSWORD'),
+        host=os.getenv('DATABASE_HOST'),
+        port=os.getenv('DATABASE_PORT'),
+        sslmode='require',
+        connect_timeout=10,
+        keepalives=1,
         keepalives_idle=30,
-        keepalives_interval=10, 
+        keepalives_interval=10,
         keepalives_count=5
     )
-    logger.info("✅ Database connected successfully")
-except psycopg2.OperationalError as e:
-    logger.error(f"❌ Database connection failed: {e}")
-    logger.warning("⚠️ Server will start without database (some features may not work)")
-    db = None
+    logger.info("✅ Database connection pool created successfully")
 except Exception as e:
-    logger.error(f"❌ Unexpected database error: {e}")
-    db = None
+    logger.error(f"❌ Database pool creation failed: {e}")
+    logger.warning("⚠️ Server will start without database (some features may not work)")
+
+# Helper functions for database connection management
+def get_db_connection():
+    """Get a database connection from the pool with automatic retry"""
+    if db_pool is None:
+        return None
+    
+    try:
+        conn = db_pool.getconn()
+        # Test the connection
+        if conn.closed:
+            db_pool.putconn(conn, close=True)
+            conn = db_pool.getconn()
+        return conn
+    except Exception as e:
+        logger.error(f"❌ Failed to get database connection: {e}")
+        return None
+
+def release_db_connection(conn, error=False):
+    """Release a database connection back to the pool"""
+    if db_pool is not None and conn is not None:
+        db_pool.putconn(conn, close=error)
+
+# Legacy db variable for backward compatibility (deprecated - use get_db_connection instead)
+db = None
 
 # API Routes
 
 
 @app.route('/api/services', methods=["GET"])
 def services():
-    if db is None:
+    conn = get_db_connection()
+    if conn is None:
         return jsonify({'error': 'Database not available'}), 503
     
-    cur = db.cursor()
-    cur.execute('SELECT * FROM services')
-    row_headers = [x[0] for x in cur.description]
-    rv = cur.fetchall()
-    json_data = []
-    for result in rv:
-        json_data.append(dict(zip(row_headers, result)))
-    cur.close()
-    print(json_data)
-    return jsonify(json_data)
+    try:
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM services')
+        row_headers = [x[0] for x in cur.description]
+        rv = cur.fetchall()
+        json_data = []
+        for result in rv:
+            json_data.append(dict(zip(row_headers, result)))
+        cur.close()
+        print(json_data)
+        return jsonify(json_data)
+    except Exception as e:
+        logger.error(f"❌ Services error: {e}")
+        return jsonify({'error': 'Failed to fetch services'}), 500
+    finally:
+        release_db_connection(conn)
 
 # Get forms of a particular service
 
@@ -1029,22 +1067,25 @@ User Request: "{user_prompt}"
 
 Document Type: {template_name}
 
-Extract values for these fields:
+Available fields to extract:
 {json.dumps(schema['fields'], indent=2)}
 
-IMPORTANT RULES:
-1. Only extract information explicitly mentioned in the user's request
-2. If a field is not mentioned, leave it as null
-3. Use consistent formatting:
+CRITICAL RULES:
+1. ONLY include fields that are EXPLICITLY mentioned in the user's request
+2. DO NOT include fields with null, empty, or unknown values
+3. If a field is not mentioned, DO NOT include it in the response at all
+4. Use consistent formatting:
    - Dates: YYYY-MM-DD format
    - Money: numeric value only (no currency symbols)
    - Names: proper capitalization
-4. Be precise and conservative - don't guess or infer information
+5. Be precise and conservative - don't guess or infer information
 
 Return ONLY a valid JSON object with this exact structure:
 {{
     "extracted_fields": {{
-        // Only include fields that were explicitly mentioned
+        // ONLY include fields that were explicitly mentioned with actual values
+        // Example: "recipient_name": "Rohan Sharma"
+        // DO NOT include: "client_name": null or "client_name": ""
     }},
     "confidence": 0.0-1.0  // How confident are you in the extraction?
 }}"""
@@ -1067,11 +1108,19 @@ Return ONLY a valid JSON object with this exact structure:
             extracted_fields = extraction_result.get('extracted_fields', {})
             confidence = extraction_result.get('confidence', 0.5)
             
-            # Determine missing required fields (build from schema['fields'])
-            required_fields = [
-                field_name for field_name, field_config in schema['fields'].items()
-                if field_config.get('required', False)
-            ]
+            # Determine missing required fields
+            # Handle both dict and list format for schema['fields']
+            if isinstance(schema.get('fields'), dict):
+                # Dictionary format: {field_name: {type, required, ...}}
+                required_fields = [
+                    field_name for field_name, field_config in schema['fields'].items()
+                    if field_config.get('required', False)
+                ]
+                all_field_names = list(schema['fields'].keys())
+            else:
+                # List format: ['field1', 'field2', ...]
+                all_field_names = schema.get('fields', [])
+                required_fields = schema.get('required', all_field_names)
             
             missing_fields = [
                 field for field in required_fields 
@@ -1080,7 +1129,7 @@ Return ONLY a valid JSON object with this exact structure:
             
             # Also include optional fields that weren't mentioned
             all_missing = [
-                field for field in schema['fields']
+                field for field in all_field_names
                 if field not in extracted_fields or extracted_fields.get(field) is None or extracted_fields.get(field) == 'null' or extracted_fields.get(field) == ''
             ]
             
@@ -1314,6 +1363,59 @@ Update the document according to the instruction. Return the complete updated do
         return jsonify({'error': str(e)}), 500
 
 
+def _add_formatted_text(paragraph, element):
+    """Helper function to add formatted text from HTML to DOCX paragraph"""
+    from docx.shared import Pt, RGBColor
+    
+    for child in element.children:
+        if child.name == 'strong' or child.name == 'b':
+            run = paragraph.add_run(child.get_text())
+            run.bold = True
+        elif child.name == 'em' or child.name == 'i':
+            run = paragraph.add_run(child.get_text())
+            run.italic = True
+        elif child.name == 'u':
+            run = paragraph.add_run(child.get_text())
+            run.underline = True
+        elif child.name == 's' or child.name == 'strike':
+            run = paragraph.add_run(child.get_text())
+            run.font.strike = True
+        elif child.name == 'span':
+            run = paragraph.add_run(child.get_text())
+            # Handle inline styles if present
+            style = child.get('style', '')
+            if 'color:' in style:
+                # Extract color (simplified - may need more robust parsing)
+                try:
+                    color_match = re.search(r'color:\s*#([0-9a-fA-F]{6})', style)
+                    if color_match:
+                        hex_color = color_match.group(1)
+                        r = int(hex_color[0:2], 16)
+                        g = int(hex_color[2:4], 16)
+                        b = int(hex_color[4:6], 16)
+                        run.font.color.rgb = RGBColor(r, g, b)
+                except:
+                    pass
+            if 'background' in style or 'background-color' in style:
+                try:
+                    bg_match = re.search(r'background(?:-color)?:\s*#([0-9a-fA-F]{6})', style)
+                    if bg_match:
+                        hex_color = bg_match.group(1)
+                        r = int(hex_color[0:2], 16)
+                        g = int(hex_color[2:4], 16)
+                        b = int(hex_color[4:6], 16)
+                        run.font.highlight_color = RGBColor(r, g, b)
+                except:
+                    pass
+        elif child.name == 'br':
+            paragraph.add_run().add_break()
+        elif child.name is None:
+            # Text node
+            text = str(child)
+            if text.strip():
+                paragraph.add_run(text)
+
+
 @app.route('/api/document/export', methods=['POST'])
 def export_document():
     """
@@ -1334,26 +1436,62 @@ def export_document():
         safe_title = re.sub(r'[^\w\s-]', '', document_title).strip().replace(' ', '_')
         
         if format_type == 'docx':
-            # Use existing DOCX generation (already implemented)
+            # Use existing DOCX generation with HTML formatting preserved
             from docx import Document
-            from docx.shared import Pt, Inches
+            from docx.shared import Pt, Inches, RGBColor
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
             import io
             from bs4 import BeautifulSoup
+            import html
             
-            logger.info("📄 Generating DOCX...")
+            logger.info("📄 Generating DOCX with formatting...")
             
             doc = Document()
             
-            # Add title
-            title = doc.add_heading(document_title, 0)
+            # Set default font to Calibri 11pt (Word standard)
+            style = doc.styles['Normal']
+            font = style.font
+            font.name = 'Calibri'
+            font.size = Pt(11)
             
-            # Add content (parse HTML if present)
+            # Parse HTML content
             soup = BeautifulSoup(document_content, 'html.parser')
-            text = soup.get_text()
             
-            for paragraph in text.split('\n'):
-                if paragraph.strip():
-                    doc.add_paragraph(paragraph.strip())
+            # Process HTML elements with formatting
+            for element in soup.descendants:
+                if element.name == 'p':
+                    p = doc.add_paragraph()
+                    p.paragraph_format.space_after = Pt(8)  # Word standard
+                    _add_formatted_text(p, element)
+                    
+                elif element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                    level = int(element.name[1])
+                    heading = doc.add_heading(element.get_text().strip(), level=level)
+                    heading.paragraph_format.space_after = Pt(8)
+                    
+                elif element.name == 'ul' or element.name == 'ol':
+                    for li in element.find_all('li', recursive=False):
+                        p = doc.add_paragraph(style='List Bullet' if element.name == 'ul' else 'List Number')
+                        _add_formatted_text(p, li)
+                        
+                elif element.name == 'br':
+                    if doc.paragraphs:
+                        doc.paragraphs[-1].add_run().add_break()
+                        
+                elif element.name is None and element.parent.name == 'body':
+                    # Text node directly in body
+                    text = str(element).strip()
+                    if text:
+                        p = doc.add_paragraph(text)
+                        p.paragraph_format.space_after = Pt(8)
+            
+            # If no paragraphs were added (plain text), add content as paragraphs
+            if len(doc.paragraphs) == 0:
+                text = soup.get_text()
+                for paragraph in text.split('\n'):
+                    if paragraph.strip():
+                        p = doc.add_paragraph(paragraph.strip())
+                        p.paragraph_format.space_after = Pt(8)
             
             # Save to bytes
             file_stream = io.BytesIO()
@@ -1399,14 +1537,13 @@ def export_document():
                 # Styles
                 styles = getSampleStyleSheet()
                 
-                # Title style
-                title_style = ParagraphStyle(
-                    'CustomTitle',
+                # Heading styles
+                heading_style = ParagraphStyle(
+                    'CustomHeading',
                     parent=styles['Heading1'],
-                    fontSize=24,
+                    fontSize=16,
                     textColor='#1e293b',
-                    spaceAfter=30,
-                    alignment=TA_CENTER,
+                    spaceAfter=12,
                     fontName='Helvetica-Bold'
                 )
                 
@@ -1414,28 +1551,72 @@ def export_document():
                 body_style = ParagraphStyle(
                     'CustomBody',
                     parent=styles['BodyText'],
-                    fontSize=12,
+                    fontSize=11,
                     alignment=TA_JUSTIFY,
-                    spaceAfter=12,
+                    spaceAfter=8,
                     fontName='Times-Roman',
-                    leading=16
+                    leading=14
                 )
                 
-                # Add title
-                title = Paragraph(document_title, title_style)
-                story.append(title)
-                story.append(Spacer(1, 0.3*inch))
-                
-                # Parse HTML content
+                # Parse HTML content and maintain formatting
                 soup = BeautifulSoup(document_content, 'html.parser')
-                text = soup.get_text()
                 
-                # Add content paragraphs
-                for para in text.split('\n'):
-                    if para.strip():
-                        p = Paragraph(para.strip(), body_style)
-                        story.append(p)
-                        story.append(Spacer(1, 0.1*inch))
+                # Convert HTML tags to reportlab-compatible format
+                def convert_html_for_pdf(element):
+                    """Convert HTML to reportlab paragraph format"""
+                    if element.name == 'p':
+                        text = _get_formatted_text_for_pdf(element)
+                        if text.strip():
+                            return Paragraph(text, body_style)
+                    elif element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                        text = element.get_text().strip()
+                        return Paragraph(f'<b>{text}</b>', heading_style)
+                    elif element.name in ['ul', 'ol']:
+                        items = []
+                        for li in element.find_all('li', recursive=False):
+                            text = _get_formatted_text_for_pdf(li)
+                            items.append(Paragraph(f'• {text}', body_style))
+                        return items
+                    elif element.name == 'br':
+                        return Spacer(1, 0.1*inch)
+                    return None
+                
+                def _get_formatted_text_for_pdf(element):
+                    """Extract text with inline formatting for PDF"""
+                    result = ''
+                    for child in element.children:
+                        if child.name == 'strong' or child.name == 'b':
+                            result += f'<b>{child.get_text()}</b>'
+                        elif child.name == 'em' or child.name == 'i':
+                            result += f'<i>{child.get_text()}</i>'
+                        elif child.name == 'u':
+                            result += f'<u>{child.get_text()}</u>'
+                        elif child.name == 'br':
+                            result += '<br/>'
+                        elif child.name is None:
+                            result += str(child)
+                        else:
+                            result += child.get_text()
+                    return result
+                
+                # Process all elements
+                for element in soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol']):
+                    converted = convert_html_for_pdf(element)
+                    if converted:
+                        if isinstance(converted, list):
+                            story.extend(converted)
+                        else:
+                            story.append(converted)
+                            story.append(Spacer(1, 0.05*inch))
+                
+                # If no content was added, fall back to plain text
+                if len(story) == 0:
+                    text = soup.get_text()
+                    for para in text.split('\n'):
+                        if para.strip():
+                            p = Paragraph(para.strip(), body_style)
+                            story.append(p)
+                            story.append(Spacer(1, 0.1*inch))
                 
                 # Build PDF
                 doc.build(story)
@@ -2272,9 +2453,11 @@ def signup():
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     """User login endpoint"""
+    conn = None
     try:
-        # Check database availability
-        if db is None:
+        # Get database connection
+        conn = get_db_connection()
+        if conn is None:
             return jsonify({'error': 'Service temporarily unavailable. Please try again later.'}), 503
         
         data = request.json
@@ -2285,7 +2468,7 @@ def login():
             return jsonify({'error': 'Email and password are required'}), 400
         
         # Get user from database
-        cur = db.cursor()
+        cur = conn.cursor()
         cur.execute(
             """SELECT user_id, password_hash, full_name, email, is_active 
                FROM users WHERE email = %s""",
@@ -2313,7 +2496,7 @@ def login():
             "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = %s",
             (user_id,)
         )
-        db.commit()
+        conn.commit()
         cur.close()
         
         # Generate JWT token
@@ -2336,14 +2519,19 @@ def login():
     except Exception as e:
         logger.error(f"❌ Login error: {str(e)}")
         return jsonify({'error': 'Login failed. Please try again.'}), 500
+    finally:
+        if conn is not None:
+            release_db_connection(conn)
 
 @app.route('/api/auth/verify', methods=['GET'])
 @jwt_required()
 def verify_token():
     """Verify JWT token and return user info"""
+    conn = None
     try:
-        # Check database availability
-        if db is None:
+        # Get database connection
+        conn = get_db_connection()
+        if conn is None:
             return jsonify({'error': 'Service temporarily unavailable. Please try again later.'}), 503
         
         user_id = get_jwt_identity()
@@ -2357,7 +2545,7 @@ def verify_token():
                 logger.error(f"❌ Cannot convert user_id to int: {user_id}")
                 return jsonify({'error': 'Invalid user ID format'}), 400
         
-        cur = db.cursor()
+        cur = conn.cursor()
         cur.execute(
             "SELECT user_id, email, full_name FROM users WHERE user_id = %s AND is_active = TRUE",
             (user_id,)
@@ -2382,6 +2570,9 @@ def verify_token():
     except Exception as e:
         logger.error(f"❌ Verification error: {str(e)}")
         return jsonify({'error': 'Token verification failed'}), 401
+    finally:
+        if conn is not None:
+            release_db_connection(conn)
 
 @app.route('/api/user/profile', methods=['GET'])
 @jwt_required()

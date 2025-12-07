@@ -299,47 +299,6 @@ const Dashboard = () => {
         </section>
       )}
 
-      {/* Stats */}
-      <section className="stats-section">
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon blue">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor" />
-              </svg>
-            </div>
-            <div className="stat-info">
-              <div className="stat-value">{documents.length}</div>
-              <div className="stat-label">Documents Created</div>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-icon purple">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="currentColor" />
-              </svg>
-            </div>
-            <div className="stat-info">
-              <div className="stat-value">24/7</div>
-              <div className="stat-label">AI Assistant</div>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-icon green">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor" />
-              </svg>
-            </div>
-            <div className="stat-info">
-              <div className="stat-value">Secure</div>
-              <div className="stat-label">Data Protected</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Prompt Modal */}
       {showPromptModal && (
         <PromptModal onClose={() => setShowPromptModal(false)} />

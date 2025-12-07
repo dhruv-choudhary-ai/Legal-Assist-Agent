@@ -1,6 +1,6 @@
 {
   "Lease Agreement": {
-    "filename": "Lease-Agreement-Jinja2.docx",
+    "filename": "property/lease_agreement.docx",
     "category": "Property",
     "description": "Comprehensive lease/rent agreement for property rental",
     "keywords": [
@@ -147,7 +147,7 @@
     }
   },
   "Legal Notice for Recovery of Money": {
-    "filename": "Legal-Notice-for-Recovery-of-Money-Jinja2.docx",
+    "filename": "legal_notices/recovery_of_money.docx",
     "category": "Legal Notice",
     "description": "Legal notice for recovery of outstanding money/payment",
     "keywords": [
@@ -252,7 +252,7 @@
     }
   },
   "Legal Notice for Non-Payment of Invoice": {
-    "filename": "Legal-Notice-for-Non-Payment-of-Invoice-Jinja2.docx",
+    "filename": "legal_notices/non_payment_invoice.docx",
     "category": "Legal Notice",
     "description": "Legal notice for non-payment of invoices",
     "keywords": [
@@ -356,7 +356,7 @@
     }
   },
   "Legal Notice for Recovery of Friendly Loan": {
-    "filename": "Legal-Notice-for-Recovery-of-Friendly-Loan-Jinja2.docx",
+    "filename": "legal_notices/friendly_loan_recovery.docx",
     "category": "Legal Notice",
     "description": "Legal notice for recovery of friendly/personal loan",
     "keywords": [
@@ -460,8 +460,8 @@
     }
   },
   "Family Trust Deed": {
-    "filename": "Family-Trust-Deed-Jinja2.docx",
-    "category": "Trust",
+    "filename": "corporate/family_trust.docx",
+    "category": "Corporate",
     "description": "Deed for creating a family trust",
     "keywords": [
       "trust",
@@ -624,8 +624,8 @@
     }
   },
   "NDA": {
-    "filename": "NDA-Jinja2-Fixed.docx",
-    "category": "Business",
+    "filename": "employment/NDA-Jinja2-Fixed.docx",
+    "category": "Employment",
     "description": "Non-Disclosure Agreement for protecting confidential information between parties",
     "keywords": [
       "nda",

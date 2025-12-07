@@ -126,9 +126,10 @@ const TemplateCard = ({ template, viewMode, onSelect }) => {
       property: '🏠',
       corporate: '🏢',
       contracts: '📝',
-      agreements: '🤝'
+      agreements: '🤝',
+      custom: '⭐'
     };
-    return icons[category] || '📄';
+    return icons[category.toLowerCase()] || '📄';
   };
 
   const getCategoryColor = (category) => {
@@ -137,9 +138,10 @@ const TemplateCard = ({ template, viewMode, onSelect }) => {
       property: '#10b981',
       corporate: '#8b5cf6',
       contracts: '#f59e0b',
-      agreements: '#ec4899'
+      agreements: '#ec4899',
+      custom: '#f97316'
     };
-    return colors[category] || '#6b7280';
+    return colors[category.toLowerCase()] || '#6b7280';
   };
 
   return (
@@ -151,7 +153,25 @@ const TemplateCard = ({ template, viewMode, onSelect }) => {
       </div>
       
       <div className="card-content">
-        <h3 className="card-title">{template.name}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <h3 className="card-title" style={{ margin: 0 }}>{template.name}</h3>
+          {template.is_user_template && (
+            <span 
+              style={{
+                backgroundColor: '#f97316',
+                color: 'white',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                textTransform: 'uppercase'
+              }}
+              title="User uploaded template"
+            >
+              Custom
+            </span>
+          )}
+        </div>
         
         <div className="card-meta">
           <span className="category-badge" style={{ 

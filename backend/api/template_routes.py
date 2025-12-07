@@ -6,6 +6,7 @@ NOTE: These routes use the legacy template_manager for backward compatibility
 
 from flask import Blueprint, jsonify, request, send_file
 from ai.template_manager_legacy import template_manager
+from ai.template_manager import get_template_manager
 from ai.variable_extractor import variable_extractor
 from ai.document_assembler import document_assembler
 from pathlib import Path
@@ -26,7 +27,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 @template_api.route('/api/templates/list', methods=['GET'])
 def list_templates():
     """
-    List all available templates
+    List all available templates (both system and user templates)
     
     Query params:
         category (optional): Filter by category
@@ -40,36 +41,74 @@ def list_templates():
                     "name": "NDA",
                     "category": "employment",
                     "variable_count": 6,
-                    "variables": ["PARTY_NAME_1", ...]
+                    "variables": ["PARTY_NAME_1", ...],
+                    "is_user_template": false
                 }
             ],
             "categories": ["employment", "property", "corporate"]
         }
     """
     try:
-        # Discover templates
-        templates = template_manager.discover_templates()
+        # Get legacy templates (system templates from directory structure)
+        legacy_templates = template_manager.discover_templates()
+        
+        # Get user templates from the new template manager
+        tm = get_template_manager()
+        user_template_list = tm.get_all_templates()
+        
+        # Convert user templates to the same format as legacy templates
+        user_templates = {}
+        for user_template in user_template_list:
+            if user_template.get('is_user_template', False):
+                template_name = user_template['name']
+                # Create a unique ID for user templates
+                template_id = f"user/{template_name.replace(' ', '_')}"
+                
+                # Get field count from schema
+                schema = tm.get_template_schema(template_name)
+                variables = schema.get('fields', []) if schema else []
+                
+                user_templates[template_id] = {
+                    'id': template_id,
+                    'name': template_name,
+                    'category': user_template.get('category', 'Custom'),
+                    'variable_count': len(variables),
+                    'variables': variables,
+                    'is_user_template': True,
+                    'description': user_template.get('description', '')
+                }
+        
+        # Merge both template sources
+        all_templates = {**legacy_templates, **user_templates}
         
         # Filter by category if requested
         category_filter = request.args.get('category')
         if category_filter:
-            templates = {
-                tid: info for tid, info in templates.items()
-                if info['category'] == category_filter
+            all_templates = {
+                tid: info for tid, info in all_templates.items()
+                if info.get('category') == category_filter
             }
         
-        # Get unique categories
-        categories = sorted(list(set(t['category'] for t in templates.values())))
+        # Get unique categories (filter out None values)
+        category_set = set()
+        for template_info in all_templates.values():
+            category = template_info.get('category')
+            if category:
+                category_set.add(category)
+        
+        categories = sorted(list(category_set))
         
         return jsonify({
             'success': True,
-            'templates': list(templates.values()),
+            'templates': list(all_templates.values()),
             'categories': categories,
-            'count': len(templates)
+            'count': len(all_templates)
         })
     
     except Exception as e:
+        import traceback
         logger.error(f"Failed to list templates: {e}")
+        logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
             'error': str(e)

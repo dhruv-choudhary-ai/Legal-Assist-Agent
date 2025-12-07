@@ -65,6 +65,10 @@ class TemplateManager:
         
         # Add system templates
         for name, config in self.templates.items():
+            # Skip if config is not a dict
+            if not isinstance(config, dict):
+                continue
+                
             all_templates.append({
                 'name': name,
                 'category': config.get('category'),
@@ -75,6 +79,10 @@ class TemplateManager:
         
         # Add user templates
         for name, config in self.user_templates.items():
+            # Skip if config is not a dict
+            if not isinstance(config, dict):
+                continue
+                
             all_templates.append({
                 'name': name,
                 'category': config.get('category'),

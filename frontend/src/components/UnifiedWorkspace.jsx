@@ -51,8 +51,6 @@ const UnifiedWorkspace = () => {
               {validationStatus === 'invalid' && '✗ Invalid'}
             </div>
           )}
-          
-          <WorkflowIndicator />
         </div>
       </div>
 

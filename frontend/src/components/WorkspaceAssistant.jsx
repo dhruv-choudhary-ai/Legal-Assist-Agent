@@ -60,14 +60,46 @@ const WorkspaceAssistant = () => {
   const [currentStage, setCurrentStage] = useState('ready'); // ready, analyzing, template_selected, gathering_info, generating
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const hasProcessedInitialPrompt = useRef(false);
 
   // Handle initial prompt from PromptModal
   useEffect(() => {
     const initialPrompt = location.state?.initialPrompt;
-    if (initialPrompt && conversationHistory.length === 1 && currentStage === 'ready') {
-      // Automatically analyze the initial prompt
-      setCurrentStage('analyzing');
-      analyzeIntent(initialPrompt);
+    const selectedTemplate = location.state?.selectedTemplate;
+    
+    if (initialPrompt && conversationHistory.length === 1 && currentStage === 'ready' && !hasProcessedInitialPrompt.current) {
+      hasProcessedInitialPrompt.current = true;
+      // If a specific template was selected in PromptModal, use it directly
+      if (selectedTemplate && selectedTemplate.templateName) {
+        setCurrentStage('analyzing');
+        
+        // Set the template directly without analyzing intent
+        const template = {
+          id: selectedTemplate.templateId,
+          name: selectedTemplate.templateName,
+          description: 'User-selected template',
+          isUserTemplate: selectedTemplate.isUserTemplate
+        };
+        
+        setSelectedTemplate(template);
+        setDocumentType(template.name);
+        setCurrentStage('template_selected');
+
+        const templateMessage = `Great! I'll help you create a **${template.name}**.
+
+${template.isUserTemplate ? 'Using your custom template' : 'For ' + (selectedTemplate.templateName.toLowerCase().includes('notice') ? 'legal notices' : 'document creation')}
+
+Let me analyze your request to extract the information you've already provided...`;
+
+        addToConversation('assistant', templateMessage);
+        
+        // Proceed with smart extraction
+        handleSmartExtraction(initialPrompt, template);
+      } else {
+        // No template selected, analyze intent
+        setCurrentStage('analyzing');
+        analyzeIntent(initialPrompt);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, conversationHistory.length]);
@@ -78,6 +110,95 @@ const WorkspaceAssistant = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Smart extraction function (reusable)
+  const handleSmartExtraction = async (userPrompt, template) => {
+    setIsTyping(true);
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/document/smart-extract', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: userPrompt,
+          template_name: template.name
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Smart extraction failed');
+      }
+
+      const extractionData = await response.json();
+      
+      if (extractionData.success) {
+        const { extracted_fields, missing_fields, confidence, tokens_used } = extractionData;
+        
+        console.log(`✅ Smart extraction completed | Confidence: ${confidence} | Tokens: ${tokens_used}`);
+        
+        // Update extracted fields in context
+        setExtractedFields(extracted_fields);
+        setMissingFields(missing_fields);
+        
+        // Filter out null/empty values for display
+        const validExtractedFields = Object.entries(extracted_fields).filter(([_, value]) => 
+          value !== null && value !== '' && value !== 'null' && value !== undefined
+        );
+        
+        // Show what was extracted
+        const extractedCount = validExtractedFields.length;
+        const missingCount = missing_fields.length;
+        
+        let feedbackMessage = '';
+        
+        if (extractedCount > 0) {
+          feedbackMessage += `Perfect! I've extracted **${extractedCount} field${extractedCount > 1 ? 's' : ''}** from your request:\n\n`;
+          
+          // Show extracted fields in a nice format (only non-null values)
+          validExtractedFields.forEach(([field, value]) => {
+            const readableField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            feedbackMessage += `- **${readableField}:** ${value}\n`;
+          });
+          feedbackMessage += '\n';
+        }
+        
+        if (missingCount > 0) {
+          feedbackMessage += `I just need a few more details to complete your document. Let me ask you about them...`;
+          
+          addToConversation('assistant', feedbackMessage);
+          
+          // Ask only for missing fields
+          setTimeout(() => {
+            setCurrentStage('gathering_info');
+            askNextQuestion(template, extracted_fields);
+          }, 1000);
+        } else {
+          feedbackMessage += `Amazing! You've provided all the necessary information. Let me generate your document now...`;
+          addToConversation('assistant', feedbackMessage);
+          
+          // All fields provided, generate immediately
+          setCurrentStage('generating');
+          setTimeout(() => generateDocument(template, extracted_fields), 1500);
+        }
+      } else {
+        throw new Error('Extraction returned no data');
+      }
+      
+    } catch (extractionError) {
+      console.error('Smart extraction error:', extractionError);
+      // Fallback to asking all questions
+      addToConversation('assistant', 'To create your document, I need some information from you. Let me ask you a few questions.');
+      
+      setTimeout(() => {
+        setCurrentStage('gathering_info');
+        askNextQuestion(template, {});
+      }, 1000);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   // Analyze user's intent and select template
@@ -127,85 +248,8 @@ Let me analyze your request to extract the information you've already provided..
 
       addToConversation('assistant', templateMessage);
 
-      // Step 2: Smart extraction using GPT (minimal tokens ~500)
-      setIsTyping(true);
-      
-      try {
-        const response = await fetch('http://localhost:5000/api/document/smart-extract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            prompt: userPrompt,
-            template_name: template.name
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Smart extraction failed');
-        }
-
-        const extractionData = await response.json();
-        
-        if (extractionData.success) {
-          const { extracted_fields, missing_fields, confidence, tokens_used } = extractionData;
-          
-          console.log(`✅ Smart extraction completed | Confidence: ${confidence} | Tokens: ${tokens_used}`);
-          
-          // Update extracted fields in context
-          setExtractedFields(extracted_fields);
-          setMissingFields(missing_fields);
-          
-          // Show what was extracted
-          const extractedCount = Object.keys(extracted_fields).length;
-          const missingCount = missing_fields.length;
-          
-          let feedbackMessage = '';
-          
-          if (extractedCount > 0) {
-            feedbackMessage += `Perfect! I've extracted **${extractedCount} field${extractedCount > 1 ? 's' : ''}** from your request:\n\n`;
-            
-            // Show extracted fields in a nice format
-            Object.entries(extracted_fields).forEach(([field, value]) => {
-              const readableField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-              feedbackMessage += `- **${readableField}:** ${value}\n`;
-            });
-            feedbackMessage += '\n';
-          }
-          
-          if (missingCount > 0) {
-            feedbackMessage += `I just need a few more details to complete your document. Let me ask you about them...`;
-            
-            addToConversation('assistant', feedbackMessage);
-            
-            // Ask only for missing fields
-            setTimeout(() => {
-              setCurrentStage('gathering_info');
-              askNextQuestion(template, extracted_fields);
-            }, 1000);
-          } else {
-            feedbackMessage += `Amazing! You've provided all the necessary information. Let me generate your document now...`;
-            addToConversation('assistant', feedbackMessage);
-            
-            // All fields provided, generate immediately
-            setCurrentStage('generating');
-            setTimeout(() => generateDocument(template, extracted_fields), 1500);
-          }
-        } else {
-          throw new Error('Extraction returned no data');
-        }
-        
-      } catch (extractionError) {
-        console.error('Smart extraction error:', extractionError);
-        // Fallback to asking all questions
-        addToConversation('assistant', 'To create your document, I need some information from you. Let me ask you a few questions.');
-        
-        setTimeout(() => {
-          setCurrentStage('gathering_info');
-          askNextQuestion(template, {});
-        }, 1000);
-      }
+      // Step 2: Smart extraction using handleSmartExtraction
+      handleSmartExtraction(userPrompt, template);
 
     } catch (error) {
       console.error('Intent analysis error:', error);
@@ -235,6 +279,12 @@ Let me analyze your request to extract the information you've already provided..
 
   // Get questions for each template type
   const getQuestionsForTemplate = (template) => {
+    // Add null safety check
+    if (!template || !template.name) {
+      console.error('Invalid template provided to getQuestionsForTemplate:', template);
+      return [];
+    }
+    
     if (template.name.includes('Lease') || template.name.includes('Rental')) {
       return [
         { field: 'lessor_name', question: 'What is the landlord\'s (lessor\'s) full name?' },
