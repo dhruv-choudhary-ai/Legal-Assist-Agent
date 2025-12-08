@@ -7,27 +7,18 @@
   background: white;
 }
 
-/* Editor Toolbar */
-.editor-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.625rem 1rem;
+/* Editor Title Bar (moved toolbar to header) */
+.editor-title-bar {
+  padding: 0.75rem 1rem;
   background: white;
   border-bottom: 1px solid #e5e7eb;
-  gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.editor-toolbar-left {
-  flex: 1;
 }
 
 .document-title-input {
   width: 100%;
-  max-width: 350px;
+  max-width: 100%;
   padding: 0.5rem 0.75rem;
-  font-size: 0.9375rem;
+  font-size: 1.125rem;
   font-weight: 600;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -44,70 +35,30 @@
 .document-title-input:focus {
   outline: none;
   background: white;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
-}
-
-.editor-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.toolbar-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  transition: all 0.2s ease;
-}
-
-.toolbar-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.validate-btn {
-  background: #10b981;
-  color: white;
-}
-
-.validate-btn:hover:not(:disabled) {
-  background: #059669;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
-.validate-btn:disabled {
-  background: #d1fae5;
-  color: #059669;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.export-dropdown {
-  position: relative;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .export-btn {
-  background: #3b82f6;
+  background: var(--primary-600);
   color: white;
 }
 
 .export-btn:hover:not(:disabled) {
-  background: #2563eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  background: var(--primary-700);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.export-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .export-btn:disabled {
-  background: #dbeafe;
-  color: #3b82f6;
+  background: var(--primary-100);
+  color: var(--primary-700);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .export-menu {
@@ -480,6 +431,110 @@
   white-space: nowrap;
 }
 
+/* Digital Signature Button */
+.signature-btn {
+  background: linear-gradient(135deg, var(--emerald-600) 0%, var(--emerald-500) 100%);
+  color: white;
+}
+
+.signature-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--emerald-700) 0%, var(--emerald-600) 100%);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.signature-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.signature-btn:disabled {
+  background: var(--success-100);
+  color: var(--success-700);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Signature Modal Overlay */
+.signature-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(8px);
+  animation: fadeIn var(--transition-base) ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.signature-modal-content {
+  background: var(--background);
+  border-radius: var(--radius-2xl);
+  max-width: 600px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: var(--shadow-2xl);
+  animation: slideUp var(--transition-slow) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.signature-modal-content.viewer-modal {
+  max-width: 800px;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.signature-modal-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--gray-100);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+  z-index: 10;
+}
+
+.signature-modal-close:hover {
+  background: var(--gray-200);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.signature-modal-close:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .editor-toolbar {
@@ -493,6 +548,12 @@
 
   .editor-toolbar-right {
     justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  .toolbar-btn {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
   }
 
   .editor-stats {
@@ -503,5 +564,10 @@
 
   .document-quill-editor .ql-editor {
     padding: 1rem;
+  }
+  
+  .signature-modal-content {
+    width: 95%;
+    max-height: 90vh;
   }
 }

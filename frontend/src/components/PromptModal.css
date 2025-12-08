@@ -268,8 +268,15 @@
 }
 
 .quick-prompt-icon {
-  font-size: 1.5rem;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: #667eea;
+}
+
+.quick-prompt-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .quick-prompt-text {

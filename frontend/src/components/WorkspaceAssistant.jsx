@@ -44,6 +44,8 @@ const WorkspaceAssistant = () => {
     setDocument,
     documentType,
     setDocumentType,
+    documentId,
+    setDocumentId,
     conversationHistory,
     addToConversation,
     sessionId,
@@ -444,6 +446,13 @@ Let me analyze your request to extract the information you've already provided..
       
       if (data.success && data.html_content) {
         setDocument(data.html_content);
+        
+        // Store document_id if available
+        if (data.document_id) {
+          setDocumentId(data.document_id);
+          console.log(`📄 Document ID stored: ${data.document_id}`);
+        }
+        
         setWorkflowStage('edit');
         
         const successMessage = `🎉 Your **${template.name}** is ready!
@@ -861,34 +870,32 @@ Your **${template.name}** is ready for review!`);
         {conversationHistory.map((msg, index) => (
           <div key={index} className={`assistant-message ${msg.role}`}>
             <div className="message-avatar">
-              {msg.role === 'user' ? (
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor" />
-                </svg>
-              ) : (
+              {msg.role === 'assistant' ? (
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 2L3 7L12 12L21 7L12 2Z" fill="currentColor" />
                   <path d="M3 17L12 22L21 17V11L12 16L3 11V17Z" fill="currentColor" />
                 </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor" />
+                </svg>
               )}
             </div>
             <div className="message-content">
-              <div className="message-bubble">
-                <div 
-                  className="message-text"
-                  dangerouslySetInnerHTML={{ __html: formatMessage(msg.message) }} 
-                />
-                {msg.sources && msg.sources.length > 0 && (
-                  <div className="message-sources">
-                    <div className="sources-label">📚 Sources:</div>
-                    {msg.sources.slice(0, 2).map((source, idx) => (
-                      <div key={idx} className="source-tag">
-                        {source.source} ({source.relevance})
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <div 
+                className="message-text"
+                dangerouslySetInnerHTML={{ __html: formatMessage(msg.message) }} 
+              />
+              {msg.sources && msg.sources.length > 0 && (
+                <div className="message-sources">
+                  <div className="sources-label">📚 Sources:</div>
+                  {msg.sources.slice(0, 2).map((source, idx) => (
+                    <div key={idx} className="source-tag">
+                      {source.source} ({source.relevance})
+                    </div>
+                  ))}
+                </div>
+              )}
               <span className="message-timestamp">
                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
@@ -906,7 +913,7 @@ Your **${template.name}** is ready for review!`);
               </svg>
             </div>
             <div className="message-content">
-              <div className="message-bubble typing-indicator">
+              <div className="typing-indicator">
                 <div className="typing-dot"></div>
                 <div className="typing-dot"></div>
                 <div className="typing-dot"></div>

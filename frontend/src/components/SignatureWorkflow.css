@@ -1,0 +1,656 @@
+/* SignatureWorkflow.css */
+
+.signature-workflow-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 1200px;
+  margin: 0 auto;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.workflow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.workflow-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 32px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-icon {
+  font-size: 18px;
+}
+
+/* SETUP STEP */
+.workflow-setup {
+  padding: 24px 32px;
+}
+
+.config-section {
+  background: #f9fafb;
+  padding: 24px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.config-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.add-signatory-section {
+  margin-bottom: 24px;
+}
+
+.add-signatory-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.signatory-form {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.5fr 1fr 0.7fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.signatory-form input,
+.signatory-form select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.signatory-form input:focus,
+.signatory-form select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.add-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #059669;
+}
+
+.add-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.signatories-list {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.signatories-list h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.signatory-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signatory-item:last-child {
+  margin-bottom: 0;
+}
+
+.signatory-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.signatory-order {
+  background: #3b82f6;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.signatory-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signatory-details strong {
+  font-size: 15px;
+  color: #1f2937;
+}
+
+.signatory-details small {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.role-badge {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.remove-btn {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-btn:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.workflow-actions {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #e5e7eb;
+  text-align: center;
+}
+
+.create-workflow-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.create-workflow-btn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.create-workflow-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ACTIVE STEP */
+.workflow-active {
+  padding: 24px 32px;
+}
+
+.progress-summary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+  margin-bottom: 24px;
+}
+
+.progress-summary h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 13px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat.signed .stat-value {
+  color: #10b981;
+}
+
+.stat.pending .stat-value {
+  color: #fbbf24;
+}
+
+.progress-bar {
+  background: rgba(255, 255, 255, 0.2);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: #10b981;
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.workflow-info {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.info-item {
+  font-size: 14px;
+}
+
+.info-item strong {
+  display: block;
+  color: #6b7280;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+
+.status-badge.active {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.signatories-table {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.reminder-btn {
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reminder-btn:hover {
+  background: #7c3aed;
+}
+
+.reminder-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.signatories-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.signatories-table th {
+  background: #f9fafb;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.signatories-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #374151;
+}
+
+.signatories-table tr:last-child td {
+  border-bottom: none;
+}
+
+.signatories-table tr:hover {
+  background: #f9fafb;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-notified {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-viewed {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-signed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-declined {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-expired {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.send-request-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-right: 6px;
+}
+
+.send-request-btn:hover {
+  background: #2563eb;
+}
+
+.send-request-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.remove-btn-sm {
+  background: transparent;
+  color: #dc2626;
+  border: none;
+  padding: 4px 8px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.remove-btn-sm:hover {
+  background: #fee2e2;
+}
+
+.remove-btn-sm:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.add-more-section {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.add-more-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* COMPLETED STEP */
+.workflow-completed {
+  padding: 60px 32px;
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+}
+
+.workflow-completed h3 {
+  margin: 0 0 12px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.workflow-completed p {
+  color: #6b7280;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.completion-summary {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+  display: inline-block;
+  text-align: left;
+  margin-top: 20px;
+}
+
+.completion-summary p {
+  margin: 8px 0;
+  color: #374151;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .signatory-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .workflow-info {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .workflow-header {
+    padding: 16px 20px;
+  }
+
+  .workflow-setup,
+  .workflow-active {
+    padding: 16px 20px;
+  }
+
+  .signatory-form {
+    grid-template-columns: 1fr;
+  }
+
+  .signatories-table {
+    overflow-x: auto;
+  }
+
+  .signatories-table table {
+    min-width: 800px;
+  }
+}

@@ -1,0 +1,339 @@
+.digital-signature-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 3rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+}
+
+.digital-signature-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.signature-page-header {
+  max-width: 1200px;
+  margin: 0 auto 4rem;
+  text-align: center;
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 3rem;
+  backdrop-filter: blur(10px);
+  text-decoration: none;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateX(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.back-button:active {
+  transform: translateX(-2px);
+}
+
+.back-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.signature-page-header h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.signature-page-header .subtitle {
+  font-size: 1.25rem;
+  opacity: 0.95;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.75;
+  font-weight: 400;
+}
+
+.signature-page-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.signature-welcome {
+  background: white;
+  border-radius: 24px;
+  padding: 4rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.signature-welcome::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.signature-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.feature-card {
+  text-align: center;
+  padding: 2.5rem 2rem;
+  background: white;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid #f3f4f6;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.2);
+  border-color: #e0e7ff;
+}
+
+.feature-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.feature-card:hover .feature-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+}
+
+.feature-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.feature-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #111827;
+  font-weight: 600;
+}
+
+.feature-card p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.75;
+  margin: 0;
+}
+
+.signature-cta {
+  text-align: center;
+  padding-top: 3rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.start-signing-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.125rem 3rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.start-signing-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.start-signing-btn:hover::before {
+  left: 100%;
+}
+
+.start-signing-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.45);
+}
+
+.start-signing-btn:active {
+  transform: translateY(-1px);
+}
+
+.start-signing-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  max-width: 600px;
+  margin: 2rem auto 0;
+  padding: 1.125rem 1.5rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fef08a 100%);
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+}
+
+.info-note svg {
+  width: 22px;
+  height: 22px;
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.info-note p {
+  margin: 0;
+  color: #92400e;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  font-weight: 500;
+}
+
+.signature-panel-container {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.signature-panel-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .digital-signature-page {
+    padding: 1.5rem;
+  }
+
+  .signature-page-header {
+    margin-bottom: 2rem;
+  }
+
+  .signature-page-header h1 {
+    font-size: 2rem;
+  }
+
+  .signature-page-header .subtitle {
+    font-size: 1rem;
+  }
+
+  .signature-welcome {
+    padding: 2rem 1.5rem;
+  }
+
+  .signature-features {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .feature-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .signature-cta {
+    padding-top: 2rem;
+  }
+
+  .start-signing-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem 2rem;
+  }
+
+  .back-button {
+    margin-bottom: 2rem;
+  }
+
+  .info-note {
+    margin: 1.5rem auto 0;
+  }
+}

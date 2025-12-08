@@ -49,13 +49,23 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not register template API routes: {e}")
 
+# Import and register digital signature API blueprint
+try:
+    from api.signature_routes import signature_api
+    app.register_blueprint(signature_api)
+    logger.info("✅ Digital Signature API routes registered")
+except Exception as e:
+    logger.warning(f"⚠️ Could not register signature API routes: {e}")
+
 # Configure CORS to allow requests from React frontend
 cors = CORS(app, resources={
     r"/api/*": {
         "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+        "expose_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True,
+        "max_age": 3600
     }
 })
 
@@ -1210,6 +1220,7 @@ def generate_from_template():
             logger.info(f"✅ Document saved: {output_path}")
             
             # Save document to database
+            doc_id = None
             try:
                 conn = get_db_connection()
                 if conn:
@@ -1249,12 +1260,18 @@ def generate_from_template():
                     result = mammoth.convert_to_html(f)
                     html_content = result.value
                 
-                return jsonify({
+                response_data = {
                     'success': True,
                     'html_content': html_content,
                     'download_url': f'/api/document/download/{output_filename}',
                     'filename': output_filename
-                })
+                }
+                
+                # Include document_id if saved to database
+                if doc_id:
+                    response_data['document_id'] = doc_id
+                
+                return jsonify(response_data)
         
         except FileNotFoundError as e:
             return jsonify({'error': f'Template file not found: {str(e)}'}), 404
@@ -1265,6 +1282,104 @@ def generate_from_template():
     except Exception as e:
         logger.error(f"❌ Document generation error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+
+@app.route('/api/document/upload', methods=['POST'])
+@jwt_required()
+def upload_document():
+    """
+    Upload a document file (PDF or DOCX) for signing
+    
+    Accepts:
+    - PDF files
+    - Word documents (.doc, .docx)
+    
+    Returns document_id for signing
+    """
+    conn = None
+    try:
+        # Check if file is in request
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Validate file type
+        allowed_extensions = {'.pdf', '.doc', '.docx'}
+        file_ext = Path(file.filename).suffix.lower()
+        
+        if file_ext not in allowed_extensions:
+            return jsonify({'error': 'Invalid file type. Only PDF and Word documents are allowed'}), 400
+        
+        # Get user ID
+        user_id = get_jwt_identity()
+        
+        # Create upload directory if it doesn't exist
+        upload_dir = Path('temp_uploads')
+        upload_dir.mkdir(exist_ok=True)
+        
+        # Generate unique filename
+        unique_filename = f"upload_{uuid.uuid4().hex[:8]}{file_ext}"
+        file_path = upload_dir / unique_filename
+        
+        # Save file
+        file.save(str(file_path))
+        logger.info(f"📤 File uploaded: {unique_filename}")
+        
+        # Convert to HTML for database storage
+        try:
+            if file_ext == '.pdf':
+                # For PDFs, we'll store a reference since conversion is complex
+                document_content = f"<p>[PDF Document: {file.filename}]</p>"
+                # TODO: Implement PDF to HTML conversion if needed
+            else:
+                # Convert Word document to HTML
+                with open(file_path, 'rb') as f:
+                    result = mammoth.convert_to_html(f)
+                    document_content = result.value
+        except Exception as convert_error:
+            logger.warning(f"⚠️ Could not convert document to HTML: {convert_error}")
+            document_content = f"<p>[Document: {file.filename}]</p>"
+        
+        # Save to database
+        doc_id = None
+        try:
+            conn = get_db_connection()
+            if conn:
+                cur = conn.cursor()
+                cur.execute(
+                    """INSERT INTO user_documents (user_id, form_name, content)
+                       VALUES (%s, %s, %s)
+                       RETURNING doc_id""",
+                    (user_id, file.filename, document_content)
+                )
+                doc_id = cur.fetchone()[0]
+                conn.commit()
+                cur.close()
+                logger.info(f"✅ Document saved to database with doc_id: {doc_id}")
+            else:
+                logger.warning("⚠️ Database not available")
+                return jsonify({'error': 'Database not available'}), 503
+        except Exception as db_error:
+            logger.error(f"❌ Database save error: {db_error}")
+            return jsonify({'error': 'Failed to save document'}), 500
+        
+        return jsonify({
+            'success': True,
+            'document_id': doc_id,
+            'filename': file.filename,
+            'message': 'Document uploaded successfully'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"❌ Upload error: {str(e)}")
+        return jsonify({'error': f'Upload failed: {str(e)}'}), 500
     finally:
         if conn:
             release_db_connection(conn)
@@ -2646,7 +2761,7 @@ def get_profile():
 @app.route('/api/user/documents', methods=['GET'])
 @jwt_required()
 def get_user_documents():
-    """Get user's document history"""
+    """Get user's document history with signature status"""
     conn = None
     try:
         conn = get_db_connection()
@@ -2659,10 +2774,21 @@ def get_user_documents():
         
         cur = conn.cursor()
         cur.execute(
-            """SELECT doc_id, form_name, created_at, updated_at 
-               FROM user_documents 
-               WHERE user_id = %s 
-               ORDER BY created_at DESC 
+            """SELECT 
+                ud.doc_id, 
+                ud.form_name, 
+                ud.created_at, 
+                ud.updated_at,
+                ds.signature_id,
+                ds.signature_status,
+                ds.signed_at,
+                ds.signature_metadata,
+                ds.signature_certificate_url,
+                ds.signed_document_url
+               FROM user_documents ud
+               LEFT JOIN digital_signatures ds ON ud.doc_id = ds.document_id
+               WHERE ud.user_id = %s 
+               ORDER BY ud.created_at DESC 
                LIMIT 50""",
             (user_id,)
         )
@@ -2671,12 +2797,30 @@ def get_user_documents():
         
         doc_list = []
         for doc in documents:
-            doc_list.append({
+            # Extract signer name from metadata if available
+            metadata = doc[7] if doc[7] else {}
+            if isinstance(metadata, str):
+                import json
+                try:
+                    metadata = json.loads(metadata)
+                except:
+                    metadata = {}
+            
+            doc_obj = {
                 'doc_id': doc[0],
                 'form_name': doc[1],
                 'created_at': doc[2].isoformat() if doc[2] else None,
-                'updated_at': doc[3].isoformat() if doc[3] else None
-            })
+                'updated_at': doc[3].isoformat() if doc[3] else None,
+                'signature_id': doc[4],
+                'is_signed': doc[4] is not None and doc[5] == 'signed',
+                'signature_status': doc[5] if doc[4] else None,
+                'signed_at': doc[6].isoformat() if doc[6] else None,
+                'signer_name': metadata.get('signer_name') if metadata else None,
+                'has_certificate': doc[8] is not None,
+                'certificate_id': doc[4] if doc[8] is not None else None,
+                'signed_document_url': doc[9] if doc[9] else None
+            }
+            doc_list.append(doc_obj)
         
         logger.info(f"✅ Found {len(doc_list)} documents for user: {user_id}")
         return jsonify({
@@ -2688,6 +2832,218 @@ def get_user_documents():
     except Exception as e:
         logger.error(f"❌ Documents error: {str(e)}")
         return jsonify({'error': 'Failed to fetch documents'}), 500
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+@app.route('/api/document/download/<int:doc_id>', methods=['GET'])
+@jwt_required()
+def download_document(doc_id):
+    """Download a generated document by ID - Returns signed PDF if available, otherwise unsigned PDF or DOCX"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify({'error': 'Service unavailable'}), 503
+        
+        user_id = get_jwt_identity()
+        logger.info(f"📥 Download request for doc_id: {doc_id} by user: {user_id}")
+        
+        # Verify document belongs to user
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT ud.form_name, ud.content, ds.signature_id, ds.signature_status
+               FROM user_documents ud
+               LEFT JOIN digital_signatures ds ON ud.doc_id = ds.document_id
+               WHERE ud.doc_id = %s AND ud.user_id = %s
+               ORDER BY ds.created_at DESC
+               LIMIT 1""",
+            (doc_id, user_id)
+        )
+        doc = cur.fetchone()
+        cur.close()
+        
+        if not doc:
+            logger.warning(f"❌ Document {doc_id} not found for user {user_id}")
+            return jsonify({'error': 'Document not found', 'success': False}), 404
+        
+        form_name, content, signature_id, signature_status = doc
+        
+        # Clean the form_name (remove any existing extensions)
+        import os.path as path
+        base_name = form_name
+        # Remove common extensions
+        for ext in ['.pdf', '.docx', '.doc', '.txt']:
+            if base_name.lower().endswith(ext):
+                base_name = base_name[:-len(ext)]
+                break
+        
+        # Priority 1: Check for signed PDF (if document is signed)
+        if signature_id and signature_status == 'signed':
+            signed_pdf_path = os.path.join('generated_documents', 'pdfs', f'document_{doc_id}_signed.pdf')
+            if os.path.exists(signed_pdf_path):
+                logger.info(f"✅ Sending signed PDF: {signed_pdf_path}")
+                return send_file(
+                    signed_pdf_path,
+                    as_attachment=True,
+                    download_name=f"{base_name}_signed.pdf",
+                    mimetype='application/pdf'
+                )
+        
+        # Priority 2: Check for unsigned PDF
+        unsigned_pdf_path = os.path.join('generated_documents', 'pdfs', f'document_{doc_id}.pdf')
+        if os.path.exists(unsigned_pdf_path):
+            logger.info(f"✅ Sending unsigned PDF: {unsigned_pdf_path}")
+            return send_file(
+                unsigned_pdf_path,
+                as_attachment=True,
+                download_name=f"{base_name}.pdf",
+                mimetype='application/pdf'
+            )
+        
+        # Priority 3: Check for DOCX files
+        docx_paths = [
+            os.path.join('generated_documents', f"{doc_id}.docx"),
+            os.path.join('generated_documents', f"generated_{form_name}_{doc_id}.docx"),
+            os.path.join('generated_documents', f"{form_name}_{doc_id}.docx")
+        ]
+        
+        for docx_path in docx_paths:
+            if os.path.exists(docx_path):
+                logger.info(f"✅ Sending DOCX file: {docx_path}")
+                return send_file(
+                    docx_path,
+                    as_attachment=True,
+                    download_name=f"{base_name}.docx",
+                    mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                )
+        
+        # Priority 4: Generate PDF from database content if no file exists
+        if content:
+            logger.info(f"📄 Generating PDF from database content for doc_id {doc_id}")
+            from reportlab.lib.pagesizes import letter
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.lib.units import inch
+            import io
+            from html.parser import HTMLParser
+            
+            # Strip HTML tags from content
+            class HTMLStripper(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.text = []
+                def handle_data(self, data):
+                    self.text.append(data)
+                def get_text(self):
+                    return ''.join(self.text)
+            
+            stripper = HTMLStripper()
+            stripper.feed(content)
+            clean_content = stripper.get_text()
+            
+            # Create PDF in memory
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter)
+            story = []
+            styles = getSampleStyleSheet()
+            
+            # Add title
+            story.append(Paragraph(form_name, styles['Title']))
+            story.append(Spacer(1, 0.2*inch))
+            
+            # Add content
+            for para in clean_content.split('\n'):
+                if para.strip():
+                    story.append(Paragraph(para, styles['Normal']))
+                    story.append(Spacer(1, 0.1*inch))
+            
+            doc.build(story)
+            buffer.seek(0)
+            
+            return send_file(
+                buffer,
+                as_attachment=True,
+                download_name=f"{base_name}.pdf",
+                mimetype='application/pdf'
+            )
+        
+        # No file and no content
+        logger.error(f"❌ No file or content found for doc_id {doc_id}")
+        return jsonify({'error': 'Document content not found', 'success': False}), 404
+        
+    except Exception as e:
+        logger.error(f"❌ Download error: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({'error': 'Failed to download document', 'success': False}), 500
+    finally:
+        if conn is not None:
+            release_db_connection(conn)
+
+@app.route('/api/document/save', methods=['POST'])
+@jwt_required()
+def save_document():
+    """Save or update document to database"""
+    conn = None
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'Request body is required'}), 400
+        
+        title = data.get('title', 'Untitled Document')
+        content = data.get('content', '')
+        doc_id = data.get('doc_id')  # Optional - for updates
+        
+        if not content:
+            return jsonify({'error': 'Document content is required'}), 400
+        
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify({'error': 'Database service temporarily unavailable'}), 503
+        
+        cur = conn.cursor()
+        
+        if doc_id:
+            # Update existing document
+            cur.execute(
+                """UPDATE user_documents 
+                   SET form_name = %s, content = %s, updated_at = CURRENT_TIMESTAMP
+                   WHERE doc_id = %s AND user_id = %s
+                   RETURNING doc_id""",
+                (title, content, doc_id, user_id)
+            )
+            result = cur.fetchone()
+            if not result:
+                cur.close()
+                return jsonify({'error': 'Document not found or access denied'}), 404
+            doc_id = result[0]
+            logger.info(f"✅ Document {doc_id} updated for user {user_id}")
+        else:
+            # Create new document
+            cur.execute(
+                """INSERT INTO user_documents (user_id, form_name, content)
+                   VALUES (%s, %s, %s)
+                   RETURNING doc_id""",
+                (user_id, title, content)
+            )
+            doc_id = cur.fetchone()[0]
+            logger.info(f"✅ New document {doc_id} created for user {user_id}")
+        
+        conn.commit()
+        cur.close()
+        
+        return jsonify({
+            'success': True,
+            'doc_id': doc_id,
+            'message': 'Document saved successfully'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"❌ Save document error: {str(e)}")
+        return jsonify({'error': f'Failed to save document: {str(e)}'}), 500
     finally:
         if conn:
             release_db_connection(conn)

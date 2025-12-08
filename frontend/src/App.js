@@ -24,6 +24,10 @@ import DocumentAnalyzerPanel from "./components/DocumentAnalyzerPanel";
 import ContractReviewPanel from "./components/ContractReviewPanel";
 import ClauseSearchPanel from "./components/ClauseSearchPanel";
 import LegalResearchPanel from "./components/LegalResearchPanel";
+import DigitalSignaturePage from "./components/DigitalSignaturePage";
+import VerifySignature from "./components/VerifySignature";
+import DocumentHistory from "./components/DocumentHistory";
+import SignedDocuments from "./components/SignedDocuments";
 
 function AppContent() {
   const location = useLocation();
@@ -49,6 +53,10 @@ function AppContent() {
         <Route path="/quick-actions/contract-review" element={<ContractReviewPanel />} />
         <Route path="/quick-actions/clause-search" element={<ClauseSearchPanel />} />
         <Route path="/quick-actions/legal-research" element={<LegalResearchPanel />} />
+        <Route path="/quick-actions/digital-signature" element={<DigitalSignaturePage />} />
+        <Route path="/quick-actions/verify-signature" element={<VerifySignature />} />
+        <Route path="/documents" element={<DocumentHistory />} />
+        <Route path="/signed-documents" element={<SignedDocuments />} />
       </Routes>
       <ToastContainer />
       {!isWorkspace && !isQuickAction && <Footer />}

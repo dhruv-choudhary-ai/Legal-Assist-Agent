@@ -10,7 +10,7 @@ const PromptModal = ({ onClose }) => {
   const [selectedFormat, setSelectedFormat] = useState('auto');
   const [isLoading, setIsLoading] = useState(false);
   const [documentFormats, setDocumentFormats] = useState([
-    { id: 'auto', name: 'Auto-Detect', description: 'Let AI choose the best format', icon: '✨' }
+    { id: 'auto', name: 'Auto-Detect', description: 'Let AI choose the best format' }
   ]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
 
@@ -45,7 +45,7 @@ const PromptModal = ({ onClose }) => {
 
           // Combine: auto-detect, system templates, then user templates
           setDocumentFormats([
-            { id: 'auto', name: 'Auto-Detect', description: 'Let AI choose the best format', icon: '✨' },
+            { id: 'auto', name: 'Auto-Detect', description: 'Let AI choose the best format' },
             ...systemTemplates,
             ...userTemplates
           ]);
@@ -63,15 +63,8 @@ const PromptModal = ({ onClose }) => {
 
   // Get icon based on category
   const getCategoryIcon = (category) => {
-    const icons = {
-      property: '🏠',
-      employment: '💼',
-      corporate: '🤝',
-      custom: '⭐',
-      contracts: '📝',
-      agreements: '🤝'
-    };
-    return icons[category?.toLowerCase()] || '📄';
+    // Returns empty string - icons not used in select dropdown
+    return '';
   };
 
   const handleSubmit = async (e) => {
@@ -249,9 +242,9 @@ const PromptModal = ({ onClose }) => {
                 ) : (
                   <>
                     Create Document
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M13 7L18 12M18 12L13 17M18 12H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    </svg> */}
                   </>
                 )}
               </button>

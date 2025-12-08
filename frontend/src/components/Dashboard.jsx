@@ -143,6 +143,29 @@ const Dashboard = () => {
       link: '/',
       color: 'cyan',
       onClick: () => alert('Document comparison coming soon!')
+    },
+    {
+      title: 'Digital Signature',
+      description: 'eSign documents securely',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 14.66V20C20 21.1 19.1 22 18 22H4C2.9 22 2 21.1 2 20V6C2 4.9 2.9 4 4 4H9.34C9.84 2.84 10.79 2 12 2C13.21 2 14.16 2.84 14.66 4H20C21.1 4 22 4.9 22 6V12.34L20 14.34V6H18V9H6V6H4V20H18V16.66L20 14.66ZM12 5C11.45 5 11 4.55 11 4C11 3.45 11.45 3 12 3C12.55 3 13 3.45 13 4C13 4.55 12.55 5 12 5Z" fill="currentColor"/>
+          <path d="M13.46 11.88L14.88 13.3L20 8.18L21.42 9.6L14.88 16.14L11.46 12.72L13.46 11.88Z" fill="currentColor"/>
+        </svg>
+      ),
+      link: '/quick-actions/digital-signature',
+      color: 'emerald'
+    },
+    {
+      title: 'Verify Signature',
+      description: 'Verify signed documents',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+      link: '/quick-actions/verify-signature',
+      color: 'violet'
     }
   ];
 
@@ -272,104 +295,7 @@ const Dashboard = () => {
         )}
       </section>
 
-      {/* Document History */}
-      {documents.length > 0 && (
-        <section className="document-history">
-          <div className="section-header">
-            <h2 className="section-title">Document History</h2>
-            <div className="history-filters">
-              <span className="filter-label">All Documents</span>
-            </div>
-          </div>
-
-          <div className="history-table-container">
-            <table className="history-table">
-              <thead>
-                <tr>
-                  <th>Document Name</th>
-                  <th>Type</th>
-                  <th>Created Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map((doc) => (
-                  <tr key={doc.doc_id}>
-                    <td className="doc-name-cell">
-                      <div className="doc-name-wrapper">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor" opacity="0.2"/>
-                          <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
-                        </svg>
-                        <span className="doc-title">{doc.form_name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="doc-type-badge">
-                        {doc.form_name.includes('Lease') ? 'Property' : 
-                         doc.form_name.includes('NDA') ? 'Business' :
-                         doc.form_name.includes('Notice') ? 'Legal Notice' :
-                         doc.form_name.includes('Trust') ? 'Trust' : 'Document'}
-                      </span>
-                    </td>
-                    <td className="doc-date-cell">
-                      {new Date(doc.created_at).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                      <span className="doc-time">
-                        {new Date(doc.created_at).toLocaleTimeString('en-IN', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="status-badge status-completed">
-                        <svg viewBox="0 0 8 8" fill="none">
-                          <circle cx="4" cy="4" r="3" fill="currentColor"/>
-                        </svg>
-                        Completed
-                      </span>
-                    </td>
-                    <td className="actions-cell">
-                      <div className="action-buttons">
-                        <button 
-                          className="action-btn view-btn" 
-                          title="View Document"
-                          onClick={() => window.open(`http://127.0.0.1:5000/api/document/download/${doc.doc_id}`, '_blank')}
-                        >
-                          <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" strokeWidth="2"/>
-                            <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="currentColor" strokeWidth="2"/>
-                          </svg>
-                        </button>
-                        <button 
-                          className="action-btn download-btn" 
-                          title="Download Document"
-                          onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = `http://127.0.0.1:5000/api/document/download/${doc.doc_id}`;
-                            link.download = `${doc.form_name}.docx`;
-                            link.click();
-                          }}
-                        >
-                          <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M21 15V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                            <path d="M7 10L12 15M12 15L17 10M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {/* Document History removed - now accessible via navbar */}
 
       {/* Prompt Modal */}
       {showPromptModal && (

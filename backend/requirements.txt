@@ -24,6 +24,11 @@ pdfplumber==0.11.0
 pymupdf==1.24.0  # More accurate PDF text extraction
 reportlab==4.0.7
 
+# Digital Signature Support
+cryptography==41.0.7  # For hashing and encryption
+pillow==10.1.0  # For image handling in signatures
+qrcode==7.4.2  # For QR code generation in certificates
+
 # RTF Support
 striprtf==0.0.26  # RTF to plain text conversion
 
@@ -77,6 +82,9 @@ requests==2.32.3
 beautifulsoup4==4.12.3
 markdownify==0.13.1
 python-multipart==0.0.12
+
+# Email/SMS for signature notifications (optional)
+# twilio==9.0.0  # Uncomment if SMS notifications needed
 
 # ===================================
 # CACHING & PERFORMANCE

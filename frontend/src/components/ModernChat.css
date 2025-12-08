@@ -782,6 +782,12 @@
   width: 20px;
   height: 20px;
   color: white;
+  stroke: white;
+  fill: white;
+}
+
+.upload-btn svg path {
+  stroke: white;
 }
 
 .upload-btn:hover:not(:disabled) {

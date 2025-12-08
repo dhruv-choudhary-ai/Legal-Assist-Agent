@@ -4,20 +4,32 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import DocumentEditor from './DocumentEditor';
 import WorkspaceAssistant from './WorkspaceAssistant';
 import ValidationPanel from './ValidationPanel';
+import SignaturePanel from './SignaturePanel';
+import SignatureWorkflow from './SignatureWorkflow';
+import SignedDocumentViewer from './SignedDocumentViewer';
 import './UnifiedWorkspace.css';
 
 const UnifiedWorkspace = () => {
   const location = useLocation();
   const { 
     workflowStage, 
-    documentTitle, 
+    documentTitle,
+    setDocumentTitle, 
+    documentId,
     validationStatus, 
     isGenerating,
-    isValidating
+    isValidating,
+    validateDocument,
+    exportDocument
   } = useWorkspace();
   const [isAssistantCollapsed, setIsAssistantCollapsed] = useState(false);
   const [editorWidth, setEditorWidth] = useState(60); // Default 60%
   const [isResizing, setIsResizing] = useState(false);
+  const [showSignaturePanel, setShowSignaturePanel] = useState(false);
+  const [showWorkflowPanel, setShowWorkflowPanel] = useState(false);
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
+  const [selectedSignatureId, setSelectedSignatureId] = useState(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Handle initial prompt from PromptModal
   useEffect(() => {
@@ -65,6 +77,23 @@ const UnifiedWorkspace = () => {
     };
   }, [isResizing]);
 
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showExportMenu && !e.target.closest('.export-dropdown-container')) {
+        setShowExportMenu(false);
+      }
+    };
+
+    if (showExportMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showExportMenu]);
+
   return (
     <div className="unified-workspace">
       {/* Header */}
@@ -77,18 +106,204 @@ const UnifiedWorkspace = () => {
             </svg>
           </div>
           <div className="workspace-title">
-            <h1>{documentTitle}</h1>
+            <input
+              type="text"
+              className="workspace-title-input"
+              value={documentTitle}
+              onChange={(e) => setDocumentTitle(e.target.value)}
+              placeholder="Document Title"
+            />
             <span className="workspace-stage">{getStageLabel(workflowStage, isGenerating)}</span>
           </div>
         </div>
         
         <div className="workspace-header-right">
+          {/* Editor Toolbar - Moved from DocumentEditor */}
+          <div className="editor-toolbar-in-header">
+            <button
+              className="toolbar-btn-header validate-btn"
+              onClick={() => validateDocument && validateDocument()}
+              title="Validate Document"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Validate
+            </button>
+
+            <button
+              className="toolbar-btn-header signature-btn"
+              onClick={() => setShowSignaturePanel(true)}
+              title="Sign Document Digitally"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 14.66V20C20 21.1 19.1 22 18 22H4C2.9 22 2 21.1 2 20V6C2 4.9 2.9 4 4 4H9.34C9.84 2.84 10.79 2 12 2C13.21 2 14.16 2.84 14.66 4H20C21.1 4 22 4.9 22 6V12.34L20 14.34V6H18V9H6V6H4V20H18V16.66L20 14.66ZM12 5C11.45 5 11 4.55 11 4C11 3.45 11.45 3 12 3C12.55 3 13 3.45 13 4C13 4.55 12.55 5 12 5Z" fill="currentColor"/>
+                <path d="M13.46 11.88L14.88 13.3L20 8.18L21.42 9.6L14.88 16.14L11.46 12.72L13.46 11.88Z" fill="currentColor"/>
+              </svg>
+              eSign
+            </button>
+
+            <div className="export-dropdown-container" style={{ position: 'relative' }}>
+              <button
+                className="toolbar-btn-header export-btn"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                title="Export Document"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M7 10L12 15M12 15L17 10M12 15V3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Export
+              </button>
+              {showExportMenu && (
+                <div className="export-menu" style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '8px',
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
+                  zIndex: 9999,
+                  minWidth: '180px'
+                }}>
+                  <button
+                    className="export-option"
+                    onClick={() => {
+                      exportDocument && exportDocument('pdf');
+                      setShowExportMenu(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      width: '100%',
+                      padding: '10px 16px',
+                      textAlign: 'left',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#374151',
+                      fontWeight: '500',
+                      borderRadius: '8px 8px 0 0'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    Export as PDF
+                  </button>
+                  <button
+                    className="export-option"
+                    onClick={() => {
+                      exportDocument && exportDocument('docx');
+                      setShowExportMenu(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      width: '100%',
+                      padding: '10px 16px',
+                      textAlign: 'left',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#374151',
+                      fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <path d="M12 18v-6" />
+                      <path d="M9 15l3 3 3-3" />
+                    </svg>
+                    Export as DOCX
+                  </button>
+                  <button
+                    className="export-option"
+                    onClick={() => {
+                      exportDocument && exportDocument('txt');
+                      setShowExportMenu(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      width: '100%',
+                      padding: '10px 16px',
+                      textAlign: 'left',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#374151',
+                      fontWeight: '500',
+                      borderRadius: '0 0 8px 8px'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <line x1="12" y1="9" x2="8" y2="9" />
+                    </svg>
+                    Export as TXT
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
           {validationStatus && (
             <div className={`validation-badge ${validationStatus}`}>
               {validationStatus === 'valid' && '✓ Verified'}
               {validationStatus === 'needs_correction' && '⚠ Needs Review'}
               {validationStatus === 'invalid' && '✗ Invalid'}
             </div>
+          )}
+          
+          {/* Workflow Buttons */}
+          {workflowStage === 'export' && selectedSignatureId && (
+            <>
+              <button 
+                className="signature-btn-header workflow-btn"
+                onClick={() => setShowWorkflowPanel(true)}
+                title="Multi-Party Signature Workflow"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                Workflow
+              </button>
+              <button 
+                className="signature-btn-header viewer-btn"
+                onClick={() => setShowDocumentViewer(true)}
+                title="View Signed Document"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                View Certificate
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -169,6 +384,54 @@ const UnifiedWorkspace = () => {
                   <span>Generating report</span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Digital Signature Modal */}
+        {showSignaturePanel && (
+          <div className="signature-modal-overlay" onClick={() => setShowSignaturePanel(false)}>
+            <div className="signature-modal-content" onClick={(e) => e.stopPropagation()}>
+              <button 
+                className="signature-modal-close"
+                onClick={() => setShowSignaturePanel(false)}
+              >
+                ✕
+              </button>
+              <SignaturePanel 
+                documentId={documentId}
+                onSignatureComplete={(data) => {
+                  console.log('Document signed successfully:', data);
+                  setSelectedSignatureId(data.signature_id);
+                  setShowSignaturePanel(false);
+                  // Optionally refresh document or show success message
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Multi-Party Workflow Modal */}
+        {showWorkflowPanel && (
+          <div className="signature-modal-overlay" onClick={() => setShowWorkflowPanel(false)}>
+            <div className="signature-modal-content" onClick={(e) => e.stopPropagation()}>
+              <SignatureWorkflow 
+                documentId={documentId}
+                onClose={() => setShowWorkflowPanel(false)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Signed Document Viewer Modal */}
+        {showDocumentViewer && selectedSignatureId && (
+          <div className="signature-modal-overlay" onClick={() => setShowDocumentViewer(false)}>
+            <div className="signature-modal-content viewer-modal" onClick={(e) => e.stopPropagation()}>
+              <SignedDocumentViewer 
+                signatureId={selectedSignatureId}
+                documentId={documentId}
+                onClose={() => setShowDocumentViewer(false)}
+              />
             </div>
           </div>
         )}

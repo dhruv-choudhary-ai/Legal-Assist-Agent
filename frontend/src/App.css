@@ -1,3 +1,12 @@
+/* Import Design Tokens */
+@import './styles/design-tokens.css';
+
+/* Import Component Library */
+@import './styles/components.css';
+
+/* Import Inter Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 .App {
   text-align: center;
 }

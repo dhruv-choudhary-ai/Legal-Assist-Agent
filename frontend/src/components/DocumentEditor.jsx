@@ -1,8 +1,11 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { toast } from 'react-toastify';
+import SignaturePanel from './SignaturePanel';
+import SignatureWorkflow from './SignatureWorkflow';
+import SignedDocumentViewer from './SignedDocumentViewer';
 import './DocumentEditor.css';
 
 const DocumentEditor = () => {
@@ -18,13 +21,22 @@ const DocumentEditor = () => {
     setValidationStatus,
     setComplianceScore,
     setValidationIssues,
-    isGenerating
+    isGenerating,
+    setValidateDocument,
+    setExportDocument
   } = useWorkspace();
 
   const quillRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
+  
+  // Digital Signature states
+  const [showSignaturePanel, setShowSignaturePanel] = useState(false);
+  const [showWorkflowPanel, setShowWorkflowPanel] = useState(false);
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
+  const [selectedSignatureId, setSelectedSignatureId] = useState(null);
+  const [currentDocumentId, setCurrentDocumentId] = useState(null);
 
   // Simulate generation progress
   useEffect(() => {
@@ -79,7 +91,56 @@ const DocumentEditor = () => {
     setDocument(content);
   };
 
-  const handleValidateDocument = async () => {
+  const handleSaveDocument = async () => {
+    if (!document || !document.trim()) {
+      toast.error('No document to save');
+      return null;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://127.0.0.1:5000/api/document/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: documentTitle || 'Untitled Document',
+          content: document,
+          doc_id: currentDocumentId // Will be null for new docs
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save document');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setCurrentDocumentId(data.doc_id);
+        toast.success('Document saved successfully!');
+        return data.doc_id;
+      } else {
+        throw new Error(data.error || 'Save failed');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error(`Failed to save document: ${error.message}`);
+      return null;
+    }
+  };
+
+  const handleOpenSignaturePanel = async () => {
+    // Save document first to get doc_id
+    const docId = await handleSaveDocument();
+    if (docId) {
+      setShowSignaturePanel(true);
+    }
+  };
+
+  const handleValidateDocument = useCallback(async () => {
     if (!document.trim()) {
       toast.error('No document to validate');
       return;
@@ -136,9 +197,9 @@ const DocumentEditor = () => {
     } finally {
       setIsValidating(false);
     }
-  };
+  }, [document, documentType, setIsValidating, setWorkflowStage, setValidationStatus, setComplianceScore, setValidationIssues]);
 
-  const handleExportDocument = async (format) => {
+  const handleExportDocument = useCallback(async (format) => {
     setIsExporting(true);
     setShowExportMenu(false);
 
@@ -210,94 +271,16 @@ const DocumentEditor = () => {
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [document, documentTitle]);
+
+  // Register handlers with context
+  useEffect(() => {
+    setValidateDocument(() => handleValidateDocument);
+    setExportDocument(() => handleExportDocument);
+  }, [handleValidateDocument, handleExportDocument, setValidateDocument, setExportDocument]);
 
   return (
     <div className="document-editor">
-      {/* Editor Toolbar */}
-      <div className="editor-toolbar">
-        <div className="editor-toolbar-left">
-          <input
-            type="text"
-            className="document-title-input"
-            value={documentTitle}
-            onChange={(e) => setDocumentTitle(e.target.value)}
-            placeholder="Document Title"
-          />
-        </div>
-
-        <div className="editor-toolbar-right">
-          <button
-            className="toolbar-btn validate-btn"
-            onClick={handleValidateDocument}
-            disabled={!document || workflowStage === 'validate'}
-          >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            {workflowStage === 'validate' ? 'Validated' : 'Validate Document'}
-          </button>
-
-          <div className="export-dropdown">
-            <button
-              className="toolbar-btn export-btn"
-              onClick={() => setShowExportMenu(!showExportMenu)}
-              disabled={!document || isExporting}
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M7 10L12 15M12 15L17 10M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {isExporting ? 'Exporting...' : 'Export'}
-            </button>
-
-            {showExportMenu && (
-              <div className="export-menu">
-                <button onClick={() => handleExportDocument('docx')}>
-                  <span className="export-icon">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                  Export as DOCX
-                </button>
-                <button onClick={() => handleExportDocument('pdf')}>
-                  <span className="export-icon">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M9 13H10.5C10.8978 13 11.2794 13.158 11.5607 13.4393C11.842 13.7206 12 14.1022 12 14.5C12 14.8978 11.842 15.2794 11.5607 15.5607C11.2794 15.842 10.8978 16 10.5 16H9V18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                  Export as PDF
-                </button>
-                <button onClick={() => handleExportDocument('html')}>
-                  <span className="export-icon">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M10 13L8 15L10 17M14 13L16 15L14 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                  Export as HTML
-                </button>
-                <button onClick={() => handleExportDocument('txt')}>
-                  <span className="export-icon">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M9 9H15M9 13H15M9 17H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                  Export as TXT
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Document Editor */}
       <div className="editor-container">
         {isGenerating ? (
@@ -362,6 +345,55 @@ const DocumentEditor = () => {
             <span className="stat">{documentType}</span>
             <span className="stat">{getWordCount(document)} words</span>
             <span className="stat">Last edited: {new Date().toLocaleTimeString()}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Digital Signature Panel Modal */}
+      {showSignaturePanel && (
+        <div className="signature-modal-overlay" onClick={() => setShowSignaturePanel(false)}>
+          <div className="signature-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="signature-modal-close"
+              onClick={() => setShowSignaturePanel(false)}
+            >
+              ✕
+            </button>
+            <SignaturePanel 
+              documentId={currentDocumentId}
+              onSignatureComplete={(data) => {
+                console.log('Document signed successfully:', data);
+                setSelectedSignatureId(data.signature_id);
+                setShowSignaturePanel(false);
+                setShowDocumentViewer(true);
+                toast.success('Document signed successfully!');
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Party Workflow Modal */}
+      {showWorkflowPanel && (
+        <div className="signature-modal-overlay" onClick={() => setShowWorkflowPanel(false)}>
+          <div className="signature-modal-content" onClick={(e) => e.stopPropagation()}>
+            <SignatureWorkflow 
+              documentId={currentDocumentId}
+              onClose={() => setShowWorkflowPanel(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Signed Document Viewer Modal */}
+      {showDocumentViewer && selectedSignatureId && (
+        <div className="signature-modal-overlay" onClick={() => setShowDocumentViewer(false)}>
+          <div className="signature-modal-content viewer-modal" onClick={(e) => e.stopPropagation()}>
+            <SignedDocumentViewer 
+              signatureId={selectedSignatureId}
+              documentId={currentDocumentId}
+              onClose={() => setShowDocumentViewer(false)}
+            />
           </div>
         </div>
       )}

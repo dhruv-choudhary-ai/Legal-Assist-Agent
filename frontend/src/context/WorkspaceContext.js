@@ -15,6 +15,7 @@ export const WorkspaceProvider = ({ children }) => {
   const [document, setDocument] = useState('');
   const [documentType, setDocumentType] = useState('');
   const [documentTitle, setDocumentTitle] = useState('Untitled Document');
+  const [documentId, setDocumentId] = useState(null); // Add document ID
   
   // Metadata
   const [extractedFields, setExtractedFields] = useState({});
@@ -40,6 +41,7 @@ export const WorkspaceProvider = ({ children }) => {
     setDocument('');
     setDocumentType('');
     setDocumentTitle('Untitled Document');
+    setDocumentId(null);
     setExtractedFields({});
     setMissingFields([]);
     setDocumentCategory('');
@@ -71,6 +73,10 @@ export const WorkspaceProvider = ({ children }) => {
       }
     ]);
   };
+
+  // Action handlers
+  const [validateDocument, setValidateDocument] = useState(null);
+  const [exportDocument, setExportDocument] = useState(null);
   
   const value = {
     // Document state
@@ -80,6 +86,8 @@ export const WorkspaceProvider = ({ children }) => {
     setDocumentType,
     documentTitle,
     setDocumentTitle,
+    documentId,
+    setDocumentId,
     
     // Metadata
     extractedFields,
@@ -112,7 +120,13 @@ export const WorkspaceProvider = ({ children }) => {
     sessionId,
     
     // Helpers
-    resetWorkspace
+    resetWorkspace,
+    
+    // Action handlers
+    validateDocument,
+    setValidateDocument,
+    exportDocument,
+    setExportDocument
   };
   
   return (
