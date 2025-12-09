@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import SignaturePanel from './SignaturePanel';
 import SignatureWorkflow from './SignatureWorkflow';
@@ -9,12 +10,16 @@ import SignedDocumentViewer from './SignedDocumentViewer';
 import './DocumentEditor.css';
 
 const DocumentEditor = () => {
+  const location = useLocation();
   const {
     document,
     setDocument,
     documentTitle,
     setDocumentTitle,
     documentType,
+    setDocumentType,
+    documentId,
+    setDocumentId,
     workflowStage,
     setWorkflowStage,
     setIsValidating,
@@ -37,6 +42,26 @@ const DocumentEditor = () => {
   const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [selectedSignatureId, setSelectedSignatureId] = useState(null);
   const [currentDocumentId, setCurrentDocumentId] = useState(null);
+
+  // Load document from navigation state (from Document History)
+  useEffect(() => {
+    if (location.state?.loadDocument && location.state?.documentData) {
+      const docData = location.state.documentData;
+      setDocument(docData.content || '');
+      setDocumentTitle(docData.title || 'Untitled Document');
+      setDocumentId(docData.id || null);
+      setDocumentType(docData.template || '');
+      setWorkflowStage('edit'); // Set to edit mode
+      
+      toast.success(`Loaded: ${docData.title}`, {
+        position: "top-right",
+        autoClose: 3000
+      });
+      
+      // Clear the navigation state to prevent reloading on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location, setDocument, setDocumentTitle, setDocumentId, setDocumentType, setWorkflowStage]);
 
   // Simulate generation progress
   useEffect(() => {

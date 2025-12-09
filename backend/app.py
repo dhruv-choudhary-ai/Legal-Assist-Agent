@@ -2981,6 +2981,60 @@ def download_document(doc_id):
         if conn is not None:
             release_db_connection(conn)
 
+
+@app.route('/api/document/<int:doc_id>/data', methods=['GET'])
+@jwt_required()
+def get_document_data(doc_id):
+    """Get document data for loading into workspace"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify({'error': 'Service unavailable'}), 503
+        
+        user_id = get_jwt_identity()
+        
+        # Get document data
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT ud.doc_id, ud.form_name, ud.content, ud.template_name, 
+                      ud.created_at, ud.updated_at, ds.signature_status
+               FROM user_documents ud
+               LEFT JOIN digital_signatures ds ON ud.doc_id = ds.document_id
+               WHERE ud.doc_id = %s AND ud.user_id = %s
+               ORDER BY ds.created_at DESC
+               LIMIT 1""",
+            (doc_id, user_id)
+        )
+        doc = cur.fetchone()
+        cur.close()
+        
+        if not doc:
+            return jsonify({'error': 'Document not found'}), 404
+        
+        doc_id, form_name, content, template_name, created_at, updated_at, signature_status = doc
+        
+        return jsonify({
+            'success': True,
+            'document': {
+                'id': doc_id,
+                'title': form_name,
+                'content': content,
+                'template': template_name,
+                'created_at': created_at.isoformat() if created_at else None,
+                'updated_at': updated_at.isoformat() if updated_at else None,
+                'is_signed': signature_status == 'signed' if signature_status else False
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching document data: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+
 @app.route('/api/document/save', methods=['POST'])
 @jwt_required()
 def save_document():
@@ -3640,13 +3694,15 @@ def ask_lawyer():
         history = conversation_manager.get_history(session_id, max_messages=10)
         
         # Search legal knowledge base using RAG
-        rag_results = rag_pipeline.search(question, top_k=5)
+        search_results = rag_pipeline.search_knowledge_base(question, n_results=5)
         
-        # Build context from RAG results
-        legal_context = "\n\n".join([
-            f"**Reference {i+1}** (Relevance: {r.get('score', 0):.2f}):\n{r.get('content', '')}"
-            for i, r in enumerate(rag_results.get('results', []))
-        ])
+        # Build context from search results
+        legal_context = ""
+        if search_results:
+            legal_context = "\n\n".join([
+                f"**Reference {i+1}** (Relevance: {r.get('similarity', 0):.0%}):\n{r.get('content', '')[:500]}"
+                for i, r in enumerate(search_results[:3])
+            ])
         
         # Build conversation context
         conversation_context = "\n".join([
@@ -3654,33 +3710,50 @@ def ask_lawyer():
             for msg in history[-6:]  # Last 3 exchanges
         ])
         
-        # Create prompt
-        system_prompt = """You are an expert legal advisor providing accurate legal guidance to clients.
+        # Create prompt with professional lawyer tone
+        system_prompt = """You are a seasoned advocate practicing law in India. Respond as if you're speaking directly to a client in your office - professionally but conversationally.
 
-**Guidelines:**
-- Provide clear, accurate legal information
-- Cite relevant laws, sections, or precedents when available
-- Use professional yet accessible language
-- If uncertain, clearly state limitations
-- Never provide misleading information
-- Always recommend consulting a licensed attorney for specific cases
+**Your Speaking Style:**
+- Address the client naturally ("you", "your situation", "I would advise")
+- Speak in complete, flowing sentences - not bullet points unless absolutely necessary
+- Explain legal concepts in plain language first, then reference the technical terms
+- Use phrases like "In my experience...", "Based on the law...", "What you need to understand is..."
+- Be direct and honest about implications - both good and bad
+- When citing laws, weave them naturally into your explanation (e.g., "Under Section 10 of the Indian Contract Act, 1872...")
 
-**Context from Legal Knowledge Base:**
-""" + (legal_context if legal_context else "No specific legal references found for this query.")
+**Content Guidelines:**
+- Start by acknowledging the client's concern
+- Provide clear, practical guidance based on Indian law
+- Explain the 'why' behind legal principles, not just the 'what'
+- Mention specific Acts, Sections, and precedents where relevant
+- Discuss both rights and obligations
+- Be candid about uncertainties or areas requiring more information
+- Conclude with actionable next steps when appropriate
+- Add a disclaimer only when discussing complex matters requiring formal representation
+
+**Avoid:**
+- Overly formal or robotic language
+- Excessive bullet points or structured lists (use prose)
+- Starting with "As an AI" or similar disclaimers
+- Generic answers - be specific to Indian legal context
+
+**Legal References Available:**
+""" + (legal_context if legal_context else "No specific legal documents retrieved. I will rely on my knowledge of Indian statutory and case law.")
         
-        user_prompt = f"""**Previous Conversation:**
-{conversation_context if len(history) > 1 else "This is the first question in this session."}
+        user_prompt = f"""**Context of our conversation so far:**
+{conversation_context if len(history) > 1 else "This is our first discussion."}
 
-**Current Question:**
+**The client now asks:**
 {question}
 
-**Your Response (as a legal advisor):**"""
+**Provide your counsel:**
+Respond naturally as you would in a face-to-face consultation. Use markdown formatting ONLY when it genuinely improves readability (e.g., for section references or key points). Prefer flowing paragraphs over lists."""
         
-        # Get AI response
+        # Get AI response with higher temperature for more natural responses
         response = ai_service.chat_completion([
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
-        ], temperature=0.4, max_tokens=800)
+        ], temperature=0.7, max_tokens=1200)
         
         # Add assistant response to history
         conversation_manager.add_message(session_id, 'assistant', response)
@@ -3689,7 +3762,7 @@ def ask_lawyer():
             'success': True,
             'answer': response,
             'session_id': session_id,
-            'sources': rag_results.get('results', [])[:3],  # Top 3 sources
+            'sources': search_results[:3] if search_results else [],
             'conversation_length': len(conversation_manager.get_history(session_id))
         })
         

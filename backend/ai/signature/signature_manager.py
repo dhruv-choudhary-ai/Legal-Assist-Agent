@@ -328,7 +328,11 @@ class SignatureManager:
             )
             
             # Get verification token from metadata
-            metadata = signature['signature_metadata']
+            metadata = signature['signature_metadata'] or {}
+            # Ensure metadata is a dict (parse if it's a string)
+            if isinstance(metadata, str):
+                import json
+                metadata = json.loads(metadata)
             verification_token = metadata.get('verification_token')
             
             # Apply signature using NSDL
@@ -1065,6 +1069,10 @@ class SignatureManager:
             
             # Extract signer info from metadata
             metadata = sig_record['signature_metadata'] or {}
+            # Ensure metadata is a dict (parse if it's a string)
+            if isinstance(metadata, str):
+                import json
+                metadata = json.loads(metadata)
             
             # Prepare data for certificate
             signature_data = {

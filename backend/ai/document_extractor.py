@@ -123,8 +123,9 @@ class DocumentExtractor:
         
         paragraphs = []
         tables = []
+        page_count = len(doc)
         
-        for page_num in range(len(doc)):
+        for page_num in range(page_count):
             page = doc[page_num]
             
             # Extract text blocks (preserves structure better than get_text())
@@ -155,7 +156,7 @@ class DocumentExtractor:
             'tables': tables,
             'full_text': full_text,
             'metadata': {
-                'page_count': len(doc),
+                'page_count': page_count,
                 'paragraph_count': len(paragraphs),
                 'table_count': len(tables),
                 'has_tables': len(tables) > 0

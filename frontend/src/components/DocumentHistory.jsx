@@ -45,15 +45,25 @@ const DocumentHistory = () => {
   const handleViewDocument = async (docId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/document/download/${docId}`, {
-        method: 'HEAD',
+      const response = await fetch(`http://localhost:5000/api/document/${docId}/data`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
       if (response.ok) {
-        window.open(`http://localhost:5000/api/document/download/${docId}`, '_blank');
+        const data = await response.json();
+        if (data.success && data.document) {
+          // Navigate to workspace with document data
+          navigate('/workspace', {
+            state: {
+              loadDocument: true,
+              documentData: data.document
+            }
+          });
+        } else {
+          alert('Failed to load document data');
+        }
       } else {
         alert('Document not found or unavailable');
       }
